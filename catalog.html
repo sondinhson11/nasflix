@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0b0b" />
+    <meta name="description" content="Danh mục phim SFLIX - Lọc theo thể loại, quốc gia, năm. Phim bộ, phim lẻ, hoạt hình cập nhật liên tục." />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="canonical" href="https://sondinhson.cloud/catalog.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SFLIX" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:title" content="SFLIX | Danh mục phim" />
+    <meta property="og:description" content="Khám phá hàng nghìn bộ phim bản quyền với bộ lọc thể loại, quốc gia, năm phát hành." />
+    <meta property="og:image" content="https://sondinhson.cloud/assets/images/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://sondinhson.cloud/catalog.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SFLIX | Danh mục phim" />
+    <meta name="twitter:description" content="Khám phá hàng nghìn bộ phim bản quyền với bộ lọc thể loại, quốc gia, năm phát hành." />
+    <meta name="twitter:image" content="https://sondinhson.cloud/assets/images/og-image.svg" />
+    <title>SFLIX | Danh mục phim</title>
+    <!-- Thư viện ngoài -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Link CSS của bạn -->
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top" id="navbar">
+      <div class="container-fluid px-3 px-md-5">
+        <a class="brand-logo me-4" href="index.html">SFLIX</a>
+
+        <button
+          class="navbar-toggler border-0 shadow-none text-white"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+        >
+          <i class="fa-solid fa-bars fs-3"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navMenu">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Trang Chủ</a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="catalog.html?type=series"
+                id="seriesLink"
+                >Phim Bộ</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="catalog.html?type=movies"
+                id="moviesLink"
+                >Phim Lẻ</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="catalog.html?type=hoat-hinh"
+                id="animeLink"
+                >Hoạt Hình</a
+              >
+            </li>
+
+          </ul>
+
+          <div class="d-flex align-items-center gap-4 mt-3 mt-lg-0">
+            <i
+              class="fa-solid fa-magnifying-glass text-white fs-5 cursor-pointer d-none d-lg-block"
+              title="Tìm kiếm"
+            ></i>
+            <i
+              class="fa-regular fa-bell text-white fs-5 cursor-pointer d-none d-lg-block"
+              title="Thông báo"
+            ></i>
+            <div class="avatar-box d-none d-lg-block">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
+                alt="User"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="view-catalog" style="padding-top: 80px">
+      <div class="container-fluid px-3 px-md-5">
+        <h1 class="section-title my-3 my-md-4" id="catalogTitle">Phim Bộ</h1>
+
+        <!-- Filter Bar: gọn 1 hàng, mobile cuộn ngang, desktop hiển thị đầy đủ -->
+        <div class="filter-bar mb-3 mb-md-4">
+          <!-- Mobile: nút mở popup + chip sắp xếp nhanh -->
+          <div class="filter-bar-mobile d-flex d-md-none align-items-center gap-2">
+            <button
+              type="button"
+              class="filter-toggle-btn"
+              id="filterToggleBtn"
+              aria-label="Mở bộ lọc"
+            >
+              <i class="fa-solid fa-sliders me-2"></i>
+              Bộ lọc
+              <span class="filter-count" id="filterCount" hidden></span>
+            </button>
+
+            <div class="filter-quick-scroll flex-grow-1">
+              <select id="filterSortMobile" class="chip-select">
+                <option value="updated">Mới cập nhật</option>
+                <option value="newest">Mới nhất</option>
+                <option value="trending">Thịnh hành</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Desktop: 4 dropdown inline trên 1 hàng -->
+          <div class="filter-bar-desktop d-none d-md-flex">
+            <div class="filter-item">
+              <select id="filterYear" class="filter-select">
+                <option value="">Tất cả năm</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <select id="filterCountry" class="filter-select">
+                <option value="">Tất cả quốc gia</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <select id="filterGenre" class="filter-select">
+                <option value="">Tất cả thể loại</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <select id="filterSort" class="filter-select">
+                <option value="updated">Mới cập nhật</option>
+                <option value="newest">Mới nhất</option>
+                <option value="trending">Thịnh hành</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Sheet (mobile popup) -->
+        <div class="filter-sheet" id="filterSheet" hidden>
+          <div class="filter-sheet-backdrop" id="filterSheetBackdrop"></div>
+          <div class="filter-sheet-panel">
+            <div class="filter-sheet-header">
+              <h5 class="m-0">Bộ lọc</h5>
+              <button
+                type="button"
+                class="filter-sheet-close"
+                id="filterSheetClose"
+                aria-label="Đóng"
+              >
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <div class="filter-sheet-body">
+              <div class="filter-sheet-group">
+                <label class="filter-sheet-label">Năm phát hành</label>
+                <select id="filterYearSheet" class="filter-select">
+                  <option value="">Tất cả năm</option>
+                </select>
+              </div>
+              <div class="filter-sheet-group">
+                <label class="filter-sheet-label">Quốc gia</label>
+                <select id="filterCountrySheet" class="filter-select">
+                  <option value="">Tất cả quốc gia</option>
+                </select>
+              </div>
+              <div class="filter-sheet-group">
+                <label class="filter-sheet-label">Thể loại</label>
+                <select id="filterGenreSheet" class="filter-select">
+                  <option value="">Tất cả thể loại</option>
+                </select>
+              </div>
+            </div>
+            <div class="filter-sheet-footer">
+              <button
+                type="button"
+                class="filter-sheet-reset"
+                id="filterSheetReset"
+              >
+                Đặt lại
+              </button>
+              <button
+                type="button"
+                class="filter-sheet-apply"
+                id="filterSheetApply"
+              >
+                Áp dụng
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Movie Grid -->
+        <div class="row g-2 g-md-3" id="catalogGrid"></div>
+
+        <!-- Load More Button -->
+        <div class="text-center mt-5 mb-5">
+          <button
+            class="btn btn-outline-light px-5 py-2 rounded-0 border-secondary"
+            id="loadMoreBtn"
+          >
+            Xem thêm <i class="fa-solid fa-chevron-down ms-2"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-5 mt-5">
+      <div class="container-fluid px-3 px-md-5 text-center">
+        <p class="mb-2">Hệ thống giải trí nội bộ SFlix Media Center.</p>
+        <p class="mb-0">Dữ liệu được cung cấp bởi các API miễn phí.</p>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script src="assets/js/catalog.js"></script>
+  </body>
+</html>

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b0b0b" />
+    <meta name="description" content="Xem phim online chất lượng cao trên SFLIX - vietsub, thuyết minh, Full HD." />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <meta property="og:type" content="video.other" />
+    <meta property="og:site_name" content="SFLIX" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:title" content="SFlix Media | Xem Phim" />
+    <meta property="og:description" content="Xem phim online chất lượng cao trên SFLIX - vietsub, thuyết minh, Full HD." />
+    <meta property="og:image" content="https://sondinhson.cloud/assets/images/og-image.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SFlix Media | Xem Phim" />
+    <meta name="twitter:description" content="Xem phim online chất lượng cao trên SFLIX - vietsub, thuyết minh, Full HD." />
+    <meta name="twitter:image" content="https://sondinhson.cloud/assets/images/og-image.svg" />
+    <title>SFlix Media | Xem Phim</title>
+    <!-- Thư viện ngoài -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Link CSS của bạn -->
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom fixed-top" id="navbar">
+      <div class="container-fluid px-4 px-lg-5">
+        <a class="brand-logo" href="index.html"
+          ><i class="fa-solid fa-play"></i> NAS<span>FLIX</span></a
+        >
+        <div class="d-flex align-items-center gap-3 ms-auto"></div>
+      </div>
+    </nav>
+
+    <!-- Content Trang Chi Tiết -->
+    <div id="view-detail">
+      <div class="detail-header">
+        <div class="detail-backdrop" id="detailBackdrop"></div>
+        <div class="container-fluid px-4 px-lg-5">
+          <a
+            href="index.html"
+            class="btn btn-outline-secondary rounded-pill mb-4 border-0 bg-dark text-white text-decoration-none"
+          >
+            <i class="fa-solid fa-arrow-left me-2"></i> Trở về Trang Chủ
+          </a>
+
+          <div class="row g-5">
+            <div class="col-12 col-md-4 col-lg-3 text-center text-md-start">
+              <img src="" id="detailPoster" class="poster-glow" alt="Poster" />
+            </div>
+            <div class="col-12 col-md-8 col-lg-9">
+              <h1
+                class="fw-bold text-white mb-2"
+                id="detailTitle"
+                style="font-size: 3rem"
+              >
+                Đang tải...
+              </h1>
+              <h5 class="mb-4" id="detailOriginName">...</h5>
+
+              <div class="d-flex flex-wrap gap-3 mb-4">
+                <span
+                  class="badge bg-dark border border-secondary p-2 fs-6"
+                  id="detailYear"
+                  >...</span
+                >
+                <span class="badge text-bg-info p-2 fs-6">Vietsub</span>
+              </div>
+
+              <div class="glass-panel p-4 mb-4">
+                <h5 class="fw-bold text-white mb-3">Nội dung</h5>
+                <div id="detailContent" style="color: #bbb; line-height: 1.8">
+                  ...
+                </div>
+              </div>
+
+              <div id="sourceButtons" class="mb-4"></div>
+
+              <h4 class="fw-bold text-white mb-3">
+                <i class="fa-solid fa-list me-2"></i> Chọn Tập
+              </h4>
+              <div id="episodeList" class="d-flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Player View -->
+    <div id="view-player" style="display: none">
+      <nav
+        class="navbar navbar-expand-lg navbar-custom fixed-top"
+        id="playerNavbar"
+      >
+        <div
+          class="container-fluid px-4 px-lg-5 d-flex justify-content-between align-items-center"
+        >
+          <button class="btn btn-outline-light" onclick="switchToDetail()">
+            <i class="fa-solid fa-arrow-left me-2"></i> Quay lại
+          </button>
+          <h5
+            class="m-0 text-white"
+            id="playerTitleNav"
+            style="flex: 1; text-align: center; margin: 0 20px"
+          >
+            Đang phát
+          </h5>
+          <div style="width: 100px"></div>
+        </div>
+      </nav>
+
+      <div class="player-fullscreen" id="playerFullscreen">
+        <div class="ratio ratio-16x9 player-video-container">
+          <iframe
+            id="videoPlayer"
+            src=""
+            allowfullscreen
+            allow="autoplay"
+          ></iframe>
+        </div>
+        <div class="player-episodes-sidebar">
+          <h5 class="text-white fw-bold mb-3">Danh sách tập</h5>
+          <div id="episodeListPlayer" class="episode-list-scroll"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="assets/js/main.js"></script>
+  </body>
+</html>

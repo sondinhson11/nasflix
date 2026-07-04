@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo danh sách CCCD giả – Demo Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Be+Vietnam+Pro:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #545d6e;
+    --success: #34d399;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Be Vietnam Pro', sans-serif;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  .header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+  .header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.25);
+    padding: 3px 10px;
+    border-radius: 99px;
+  }
+  .header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.3px; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: start;
+  }
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 11px; font-weight: 500; color: var(--text2); margin-bottom: 5px; letter-spacing: 0.3px; }
+  select, input[type="number"] {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238892a4' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+  select:focus, input[type="number"]:focus { border-color: var(--accent); }
+  select:disabled { opacity: 0.4; cursor: not-allowed; }
+  select option { background: #1a1e28; }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+    height: 4px;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .hint-text { font-size: 11px; color: var(--text3); margin-top: 5px; line-height: 1.5; }
+
+  /* Quality panel */
+  .quality-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 16px;
+  }
+  .qc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .qc-item { display: flex; flex-direction: column; gap: 6px; }
+  .qc-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+  }
+  .qc-label span { font-family: var(--mono); font-size: 11px; color: var(--accent2); }
+  .toggle-row { display: flex; align-items: center; gap: 8px; }
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    left: 2px; top: 2px;
+    background: var(--text3);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: rgba(59,130,246,0.3); border-color: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: var(--accent2); }
+  .toggle-label { font-size: 12px; color: var(--text2); }
+
+  /* Stats bar */
+  .stats-bar {
+    display: none;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    margin-bottom: 16px;
+    gap: 0;
+  }
+  .stats-bar.visible { display: flex; flex-wrap: wrap; gap: 0; }
+  .stat-item {
+    flex: 1;
+    min-width: 120px;
+    padding: 0 1rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-item:first-child { padding-left: 0; }
+  .stat-item:last-child { border-right: none; }
+  .stat-label { font-size: 10px; font-family: var(--mono); letter-spacing: 0.8px; color: var(--text3); text-transform: uppercase; margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 600; color: var(--text); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .stat-warn { color: var(--warn); }
+  .stat-ok { color: var(--success); }
+
+  /* Quality indicators in table */
+  .qc-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+  .qc-dup { background: var(--danger); }
+
+  .action-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+  .btn-ghost { background: transparent; border-color: var(--border2); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--text3); color: var(--text); }
+  .btn-outline-green { background: transparent; border-color: rgba(52,211,153,0.3); color: var(--success); }
+  .btn-outline-green:hover { background: rgba(52,211,153,0.08); }
+  .status-text { font-family: var(--mono); font-size: 11px; color: var(--text3); margin-left: auto; }
+
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+  }
+  .table-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .record-count { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .record-count span { color: var(--accent2); font-weight: 500; }
+  .dup-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: rgba(248,113,113,0.12);
+    border: 1px solid rgba(248,113,113,0.25);
+    color: var(--danger);
+    display: none;
+  }
+  .dup-badge.visible { display: inline-block; }
+  .search-box { position: relative; }
+  .search-box svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--text3); pointer-events: none; }
+  .search-box input {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text); font-family: var(--sans); font-size: 12px;
+    padding: 6px 10px 6px 28px; outline: none; width: 200px; transition: border-color 0.15s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--text3); }
+
+  .tbl-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  thead th {
+    text-align: left; padding: 11px 16px;
+    font-size: 11px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase;
+    color: var(--text3); background: var(--bg3); border-bottom: 1px solid var(--border);
+    white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.15s;
+  }
+  thead th:hover { color: var(--text2); }
+  thead th.sorted { color: var(--accent2); }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.5; font-size: 10px; }
+  thead th.sorted .sort-icon { opacity: 1; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+  tbody tr.is-dup { background: rgba(248,113,113,0.04); }
+  td { padding: 12px 16px; color: var(--text); vertical-align: middle; }
+  td { display: table-cell; }
+  .cell-wrap { display: flex; align-items: center; gap: 6px; }
+  .cell-wrap > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .copy-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text3);
+    transition: all 0.15s;
+    opacity: 0;
+    padding: 0;
+  }
+  .cell-wrap:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { border-color: var(--border2); color: var(--accent2); background: rgba(59,130,246,0.1); }
+  .copy-btn.copied { color: var(--success); border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.1); }
+  .copy-btn svg { width: 12px; height: 12px; pointer-events: none; }
+  .td-num { color: var(--text3); font-family: var(--mono); font-size: 11px; }
+  .td-name { font-weight: 500; font-size: 13px; }
+  .td-cccd { font-family: var(--mono); font-size: 12px; letter-spacing: 0.8px; color: var(--accent2); }
+  .td-dob { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .td-qq { font-size: 12px; color: var(--text2); }
+  .badge { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 99px; border: 1px solid; }
+  .badge-m { color: #60a5fa; background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.2); }
+  .badge-f { color: #f9a8d4; background: rgba(236,72,153,0.1); border-color: rgba(236,72,153,0.2); }
+
+  th:nth-child(1), td:nth-child(1) { width: 60px; }
+  th:nth-child(2), td:nth-child(2) { width: 210px; }
+  th:nth-child(3), td:nth-child(3) { width: 100px; }
+  th:nth-child(4), td:nth-child(4) { width: 160px; white-space: nowrap; }
+  th:nth-child(5), td:nth-child(5) { width: 180px; }
+  th:nth-child(6), td:nth-child(6) { width: auto; }
+  .td-dob { white-space: nowrap; }
+
+  .empty-state { text-align: center; padding: 3.5rem 1rem; color: var(--text3); }
+  .empty-state svg { width: 36px; height: 36px; margin-bottom: 10px; opacity: 0.3; }
+  .empty-state p { font-size: 13px; }
+  .loading-row td { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--border); }
+  .page-info { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .page-btns { display: flex; gap: 4px; }
+  .page-btn { background: transparent; border: 1px solid var(--border); color: var(--text2); border-radius: var(--radius); font-size: 12px; padding: 4px 10px; cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
+  .page-btn:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 10px 16px; font-size: 13px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.4); opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; z-index: 999; display: flex; align-items: center; gap: 8px; }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.ok { border-color: rgba(52,211,153,0.3); }
+  #toast.err { border-color: rgba(248,113,113,0.3); }
+  #toast.warn { border-color: rgba(251,191,36,0.3); }
+  #toast svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  /* Địa bàn toggle */
+  .diaban-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .diaban-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--sans);
+  }
+  .diaban-btn:hover { border-color: var(--accent); color: var(--text); }
+  .diaban-btn.active { border-color: var(--accent); background: rgba(59,130,246,0.12); color: var(--accent2); }
+  .diaban-btn .db-icon { font-size: 16px; }
+  .diaban-btn .db-label { font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
+  .diaban-btn .db-sub { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .diaban-btn.active .db-sub { color: var(--accent2); opacity: 0.7; }
+
+  @media (max-width: 760px) {
+    .panels { grid-template-columns: 1fr; }
+    .row3 { grid-template-columns: 1fr 1fr; }
+    .qc-grid { grid-template-columns: 1fr 1fr; }
+    .search-box input { width: 140px; }
+    th:nth-child(6), td:nth-child(6) { min-width: 180px; }
+    .stat-item { padding: 0.5rem 0.75rem; border-right: none; border-bottom: 1px solid var(--border); }
+    .stat-item:last-child { border-bottom: none; }
+    .stats-bar.visible { flex-direction: column; gap: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-top">
+      <span class="tag">Demo Tool</span>
+      <span class="tag">Dữ liệu giả – Fake Data</span>
+    </div>
+    <h1>Tạo danh sách CCCD giả</h1>
+    <p>Dữ liệu ngẫu nhiên, không trùng người thật – dùng cho kiểm thử, demo, thiết kế giao diện.</p>
+  </div>
+
+  <!-- Config panels -->
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-title">Địa bàn quê quán <span id="diaban-mode-badge" style="font-family:var(--sans);text-transform:none;letter-spacing:0;font-size:10px;padding:2px 7px;border-radius:99px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:var(--accent2);margin-left:4px;">Mới · Sau sáp nhập</span></div>
+
+      <div class="diaban-toggle">
+        <button class="diaban-btn active" id="btn-diaban-moi" onclick="setDiaBan('moi')">
+          <span class="db-icon">🗺️</span>
+          <span class="db-label">Địa bàn mới</span>
+          <span class="db-sub">Sau sáp nhập</span>
+        </button>
+        <button class="diaban-btn" id="btn-diaban-cu" onclick="setDiaBan('cu')">
+          <span class="db-icon">📋</span>
+          <span class="db-label">Địa bàn cũ</span>
+          <span class="db-sub">Trước sáp nhập</span>
+        </button>
+      </div>
+
+      <div class="field">
+        <label>Tỉnh / thành phố</label>
+        <select id="sel-tinh"><option value="">Đang tải dữ liệu...</option></select>
+      </div>
+      <div class="field" id="field-huyen">
+        <label id="lbl-huyen">Quận / huyện</label>
+        <select id="sel-huyen" disabled><option value="">– Chọn tỉnh trước –</option></select>
+      </div>
+      <div class="field">
+        <label id="lbl-xa">Phường / xã</label>
+        <select id="sel-xa" disabled><option value="">– Chọn huyện trước –</option></select>
+        <p class="hint-text" id="hint-diaban">Không chọn huyện/xã → hệ thống tự chọn ngẫu nhiên trong tỉnh.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tuỳ chỉnh danh sách</div>
+      <div class="row3" style="margin-bottom:12px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>Số lượng người</label>
+          <input type="number" id="inp-soLuong" value="20" min="1" max="500" step="1">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Năm sinh từ</label>
+          <input type="number" id="inp-namTu" value="1970" min="1930" max="2010">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Đến năm</label>
+          <input type="number" id="inp-namDen" value="2005" min="1930" max="2010">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field" style="margin-bottom:0;">
+          <label>Giới tính</label>
+          <select id="sel-gt">
+            <option value="all">Tất cả (ngẫu nhiên)</option>
+            <option value="Nam">Nam</option>
+            <option value="Nu">Nữ</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Hiển thị / trang</label>
+          <select id="sel-perPage">
+            <option value="20">20 dòng</option>
+            <option value="50">50 dòng</option>
+            <option value="100">100 dòng</option>
+            <option value="999999">Tất cả</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quality controls panel -->
+  <div class="quality-panel">
+    <div class="panel-title">Kiểm soát chất lượng</div>
+    <div class="qc-grid">
+
+      <div class="qc-item">
+        <div class="qc-label">Không trùng tên &amp; CCCD</div>
+        <div class="toggle-row">
+          <label class="toggle">
+            <input type="checkbox" id="qc-unique" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Đảm bảo mọi CCCD và tên đều duy nhất</span>
+        </div>
+      </div>
+
+      <div class="qc-item">
+        <div class="qc-label">
+          Tỉ lệ giới tính
+          <span id="qc-gt-val">50 / 50</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:#60a5fa;font-family:var(--mono);">Nam</span>
+          <input type="range" id="qc-gt-ratio" min="0" max="100" value="50" step="5"
+            oninput="document.getElementById('qc-gt-val').textContent=this.value+'/'+(100-this.value);document.getElementById('sel-gt').value='all';">
+          <span style="font-size:11px;color:#f9a8d4;font-family:var(--mono);">Nữ</span>
+        </div>
+        <p class="hint-text">Kéo để điều chỉnh tỉ lệ Nam / Nữ. Chọn "Nam" hoặc "Nữ" ở ô trên sẽ bỏ qua slider này.</p>
+      </div>
+
+      <div class="qc-item">
+        <div class="qc-label">Phân bổ năm sinh đều</div>
+        <div class="toggle-row">
+          <label class="toggle">
+            <input type="checkbox" id="qc-even-year" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Trải đều qua từng năm, không dồn cụm</span>
+        </div>
+      </div>
+
+      <div class="qc-item">
+        <div class="qc-label">Tên tự nhiên</div>
+        <div class="toggle-row">
+          <label class="toggle">
+            <input type="checkbox" id="qc-natural-name" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Lọc combo họ + đệm + tên nghe kỳ lạ</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Stats bar (shown after generate) -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-item">
+      <div class="stat-label">Tổng bản ghi</div>
+      <div class="stat-val" id="st-total">0</div>
+      <div class="stat-sub">đã tạo</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Giới tính</div>
+      <div class="stat-val" id="st-gt">–</div>
+      <div class="stat-sub" id="st-gt-sub">nam / nữ</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Năm sinh</div>
+      <div class="stat-val" id="st-year">–</div>
+      <div class="stat-sub" id="st-year-sub">phân bổ đều</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Trùng lặp</div>
+      <div class="stat-val" id="st-dup">0</div>
+      <div class="stat-sub" id="st-dup-sub" class="stat-ok">không có</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">Chất lượng</div>
+      <div class="stat-val" id="st-score">–</div>
+      <div class="stat-sub" id="st-score-sub">điểm / 100</div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="action-bar">
+    <button class="btn btn-primary" onclick="generate()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+      Tạo danh sách
+    </button>
+    <button class="btn btn-outline-green" onclick="copyCSV()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Xuất CSV
+    </button>
+    <button class="btn btn-ghost" onclick="copyJSON()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Xuất JSON
+    </button>
+    <span class="status-text" id="status-txt"></span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <div class="table-header-left">
+        <span class="record-count" id="record-info">Chưa có dữ liệu</span>
+        <span class="dup-badge" id="dup-badge">0 dòng trùng</span>
+      </div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="inp-search" placeholder="Tìm tên, CCCD..." oninput="filterTable()">
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th onclick="sortBy('idx')"># <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('ten')">Họ và tên <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('gt')">Giới tính <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('nam')">Ngày sinh <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('cccd')">Số CCCD <span class="sort-icon">↕</span></th>
+            <th onclick="sortBy('qq')">Quê quán <span class="sort-icon">↕</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="6">
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+              <p>Chọn tỉnh/thành phố và nhấn <strong>Tạo danh sách</strong></p>
+            </div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination" style="display:none;">
+      <span class="page-info" id="page-info">Trang 1 / 1</span>
+      <div class="page-btns" id="page-btns"></div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast">
+  <svg id="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+/* ── Địa bàn mode ── */
+let diaBanMode = 'moi'; // 'moi' = sau sáp nhập, 'cu' = trước sáp nhập
+
+function setDiaBan(mode) {
+  diaBanMode = mode;
+  document.getElementById('btn-diaban-moi').classList.toggle('active', mode === 'moi');
+  document.getElementById('btn-diaban-cu').classList.toggle('active', mode === 'cu');
+  const badge = document.getElementById('diaban-mode-badge');
+  const hint = document.getElementById('hint-diaban');
+  if (mode === 'moi') {
+    badge.textContent = 'Mới · Sau sáp nhập';
+    badge.style.background = 'rgba(59,130,246,0.15)';
+    badge.style.borderColor = 'rgba(59,130,246,0.3)';
+    badge.style.color = 'var(--accent2)';
+    hint.textContent = 'Địa bàn mới (sau 1/7/2025) – chỉ có 2 cấp: Tỉnh/Thành phố và Xã/Phường. Không chọn xã → tự chọn ngẫu nhiên.';
+    document.getElementById('field-huyen').style.display = 'none';
+    document.getElementById('lbl-xa').textContent = 'Phường / xã (mới)';
+  } else {
+    badge.textContent = 'Cũ · Trước sáp nhập';
+    badge.style.background = 'rgba(251,191,36,0.12)';
+    badge.style.borderColor = 'rgba(251,191,36,0.3)';
+    badge.style.color = 'var(--warn)';
+    hint.textContent = 'Địa bàn cũ (trước 1/7/2025) – 3 cấp: Tỉnh → Huyện → Xã. Không chọn huyện/xã → tự chọn ngẫu nhiên.';
+    document.getElementById('field-huyen').style.display = '';
+    document.getElementById('lbl-xa').textContent = 'Phường / xã (cũ)';
+  }
+  // Reset và reload tỉnh theo chế độ
+  const selT = document.getElementById('sel-tinh');
+  const selH = document.getElementById('sel-huyen');
+  const selX = document.getElementById('sel-xa');
+  selT.value = '';
+  selH.disabled = true; selH.innerHTML = '<option value="">– Chọn tỉnh trước –</option>';
+  selX.disabled = true; selX.innerHTML = '<option value="">– Chọn huyện trước –</option>';
+  huyenList = []; xaList = [];
+  maTinhCCCD = ''; tenTinhFull = '';
+  loadTinh();
+}
+
+/* ── Escape helpers ── */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+/* ── Event delegation cho copy buttons ── */
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const text = btn.dataset.copy;
+  if (text === undefined) return;
+  copyCell(btn, text);
+});
+
+/* ── Kho tên ── */
+const hoArr = ["Nguyễn","Trần","Lê","Phạm","Hoàng","Huỳnh","Phan","Vũ","Võ","Đặng","Bùi","Đỗ","Hồ","Ngô","Dương","Lý","Đinh","Đào","Lưu","Tạ","Tô","Mai","Trương","Cao","Chu","Lâm","Thái","Hà","Đoàn"];
+
+// Đệm nam hợp lệ (không có combo lạ)
+const demNamMap = {
+  "Nguyễn":["Văn","Hữu","Quốc","Đức","Minh","Công","Thành","Trung","Gia","Xuân","Đình","Ngọc","Anh","Thế","Đăng","Bảo","Tiến"],
+  "Trần":["Văn","Hữu","Quốc","Minh","Công","Thành","Trung","Xuân","Ngọc","Bảo","Đình","Gia"],
+  "Lê":["Văn","Hữu","Quốc","Minh","Công","Thành","Trung","Ngọc","Xuân","Anh","Bảo"],
+  "default":["Văn","Hữu","Quốc","Minh","Công","Thành","Trung","Xuân","Ngọc","Anh","Bảo","Đức","Gia","Tiến"]
+};
+const tenNam = ["Hùng","Tuấn","Dũng","Khoa","Phong","Tú","Đạt","Bình","Khánh","Thiên","Nam","Long","Hải","Kiên","Tài","Phúc","Mạnh","Quân","Hưng","Tiến","Thắng","Lộc","Nhân","Hiếu","Toàn","Lâm","Vinh","Tùng","Cường","Thịnh","Phát","Tâm","Nhật","Dương","Phước","Hậu","Khải","Liêm","Quý","Sơn"];
+
+const demNuMap = {
+  "Nguyễn":["Thị","Ngọc","Thùy","Kim","Bích","Thu","Thanh","Hồng","Lan","Ánh","Phương","Ngân","Linh","Quỳnh","Mỹ","Ý","Bảo","Khánh"],
+  "Trần":["Thị","Ngọc","Thùy","Kim","Thu","Thanh","Hồng","Lan","Phương","Ngân","Linh","Quỳnh","Mỹ","Bảo"],
+  "default":["Thị","Ngọc","Thùy","Kim","Bích","Thu","Thanh","Hồng","Lan","Ánh","Phương","Ngân","Linh","Quỳnh","Mỹ","Diễm","Ý","Bảo","Khánh","Tuyết","Nhung"]
+};
+const tenNu = ["Hương","Linh","Nga","Hoa","Mai","Lan","Thảo","Yến","Nhung","Trang","Hà","Ly","Chi","Vy","Nhi","Thư","Hiền","Phương","Giang","Loan","Dung","Trinh","Thu","Nguyệt","Hân","Uyên","Trâm","Xuân","Hồng","Lệ","Châu","Tú","Như","Diễm","Vân","Ánh"];
+
+// Combo đệm-tên cần tránh (nghe lạ)
+const BAD_COMBOS = new Set([
+  "Văn Hương","Văn Hoa","Văn Lan","Văn Linh","Văn Nga","Văn Trang","Văn Thảo",
+  "Hữu Hương","Hữu Hoa","Hữu Lan","Hữu Mai","Hữu Nga",
+  "Thị Hùng","Thị Dũng","Thị Cường","Thị Mạnh","Thị Tuấn","Thị Tiến","Thị Tài","Thị Tùng",
+  "Kim Hùng","Kim Dũng","Kim Cường","Kim Mạnh",
+  "Ngọc Hùng","Ngọc Dũng" // nghe lạ với nữ
+]);
+
+function isBadCombo(dem, ten) {
+  return BAD_COMBOS.has(dem + ' ' + ten);
+}
+
+function getDemNam(ho) { return demNamMap[ho] || demNamMap['default']; }
+function getDemNu(ho) { return demNuMap[ho] || demNuMap['default']; }
+
+/* ── State ── */
+let allData = [];
+let filteredData = [];
+let sortCol = 'idx', sortDir = 1;
+let currentPage = 1, perPage = 20;
+let huyenList = [], xaList = [];
+let maTinhCCCD = '', tenTinhFull = '';
+
+/* ── Helpers ── */
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function pad(n, w) { return String(n).padStart(w, '0'); }
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ── API ── */
+async function fetchAPI(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// tinhthanhpho.com — 2 bộ endpoint riêng
+const API_NEW = 'https://tinhthanhpho.com/api/v1/new-provinces'; // sau sáp nhập: tỉnh → xã (2 cấp)
+const API_OLD_P = 'https://tinhthanhpho.com/api/v1/provinces';   // trước sáp nhập: tỉnh
+// districts: /api/v1/provinces/{code}/districts
+// wards:     /api/v1/districts/{code}/wards
+
+async function loadTinh() {
+  const sel = document.getElementById('sel-tinh');
+  sel.innerHTML = '<option value="">Đang tải...</option>';
+  sel.disabled = true;
+  try {
+    let tinhArr = [];
+    if (diaBanMode === 'moi') {
+      // Lấy tất cả (phân trang, limit 100)
+      const d = await fetchAPI(API_NEW + '?limit=100&page=1');
+      if (!d.success) throw new Error();
+      tinhArr = d.data;
+      // Nếu còn trang tiếp
+      const total = d.metadata?.total || tinhArr.length;
+      if (total > 100) {
+        const pages = Math.ceil(total / 100);
+        for (let p = 2; p <= pages; p++) {
+          const dp = await fetchAPI(API_NEW + '?limit=100&page=' + p);
+          if (dp.success) tinhArr = tinhArr.concat(dp.data);
+        }
+      }
+    } else {
+      const d = await fetchAPI(API_OLD_P + '?limit=100&page=1');
+      if (!d.success) throw new Error();
+      tinhArr = d.data;
+      const total = d.metadata?.total || tinhArr.length;
+      if (total > 100) {
+        const pages = Math.ceil(total / 100);
+        for (let p = 2; p <= pages; p++) {
+          const dp = await fetchAPI(API_OLD_P + '?limit=100&page=' + p);
+          if (dp.success) tinhArr = tinhArr.concat(dp.data);
+        }
+      }
+    }
+    sel.innerHTML = '<option value="">– Chọn tỉnh/thành phố –</option>';
+    tinhArr.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.code;
+      o.dataset.name = t.name;
+      o.textContent = (t.type ? t.type + ' ' : '') + t.name;
+      sel.appendChild(o);
+    });
+    sel.disabled = false;
+  } catch(e) {
+    sel.innerHTML = '<option value="">Lỗi tải – kiểm tra mạng</option>';
+    sel.disabled = false;
+    toast('Không tải được danh sách tỉnh.', 'err');
+  }
+}
+
+async function loadHuyen(codeTinh) {
+  const sh = document.getElementById('sel-huyen'), sx = document.getElementById('sel-xa');
+  sh.disabled = true; sh.innerHTML = '<option value="">Đang tải...</option>';
+  sx.disabled = true; sx.innerHTML = '<option value="">– Chọn huyện trước –</option>';
+  huyenList = []; xaList = [];
+
+  if (diaBanMode === 'moi') {
+    // Địa bàn mới chỉ có 2 cấp: tỉnh → xã/phường, KHÔNG có huyện
+    sh.innerHTML = '<option value="">– Không có (địa bàn mới 2 cấp) –</option>';
+    sh.disabled = true;
+    // Load luôn xã/phường
+    await loadXaMoi(codeTinh);
+    return;
+  }
+
+  // Địa bàn cũ: load huyện
+  try {
+    const d = await fetchAPI('https://tinhthanhpho.com/api/v1/provinces/' + codeTinh + '/districts?limit=100');
+    if (!d.success) throw new Error();
+    huyenList = d.data;
+    sh.innerHTML = '<option value="">– Tất cả (ngẫu nhiên) –</option>';
+    huyenList.forEach(h => {
+      const o = document.createElement('option');
+      o.value = h.code; o.dataset.name = h.name; o.textContent = (h.type ? h.type + ' ' : '') + h.name;
+      sh.appendChild(o);
+    });
+    sh.disabled = false;
+    sx.innerHTML = '<option value="">– Tất cả (ngẫu nhiên) –</option>';
+  } catch { sh.innerHTML = '<option value="">Lỗi tải huyện</option>'; }
+}
+
+async function loadXaMoi(codeTinh) {
+  const sx = document.getElementById('sel-xa');
+  sx.disabled = true; sx.innerHTML = '<option value="">Đang tải...</option>';
+  xaList = [];
+  try {
+    const d = await fetchAPI(API_NEW + '/' + codeTinh + '/wards?limit=200');
+    if (!d.success) throw new Error();
+    xaList = d.data;
+    sx.innerHTML = '<option value="">– Tất cả (ngẫu nhiên) –</option>';
+    xaList.forEach(x => {
+      const o = document.createElement('option');
+      o.value = x.code; o.dataset.name = x.name; o.textContent = (x.type ? x.type + ' ' : '') + x.name;
+      sx.appendChild(o);
+    });
+    sx.disabled = false;
+  } catch { sx.innerHTML = '<option value="">Lỗi tải xã/phường</option>'; }
+}
+
+async function loadXaCu(codeHuyen) {
+  const sx = document.getElementById('sel-xa');
+  sx.disabled = true; sx.innerHTML = '<option value="">Đang tải...</option>';
+  xaList = [];
+  try {
+    const d = await fetchAPI('https://tinhthanhpho.com/api/v1/districts/' + codeHuyen + '/wards?limit=200');
+    if (!d.success) throw new Error();
+    xaList = d.data;
+    sx.innerHTML = '<option value="">– Tất cả (ngẫu nhiên) –</option>';
+    xaList.forEach(x => {
+      const o = document.createElement('option');
+      o.value = x.code; o.dataset.name = x.name; o.textContent = (x.type ? x.type + ' ' : '') + x.name;
+      sx.appendChild(o);
+    });
+    sx.disabled = false;
+  } catch { sx.innerHTML = '<option value="">Lỗi tải xã/phường</option>'; }
+}
+
+document.getElementById('sel-tinh').addEventListener('change', function () {
+  maTinhCCCD = ''; tenTinhFull = '';
+  const sh = document.getElementById('sel-huyen'), sx = document.getElementById('sel-xa');
+  if (!this.value) {
+    sh.disabled = true; sh.innerHTML = '<option value="">– Chọn tỉnh trước –</option>';
+    sx.disabled = true; sx.innerHTML = '<option value="">– Chọn huyện trước –</option>';
+    huyenList = []; xaList = []; return;
+  }
+  tenTinhFull = this.options[this.selectedIndex].dataset.name || this.options[this.selectedIndex].textContent;
+  // Mã CCCD:
+  // - Địa bàn cũ: API trả code 2 chữ số (01–96) ~ map sang mã CCCD cũ 3 chữ số (001–096)
+  // - Địa bàn mới: API trả code 2 chữ số (01–34 theo QĐ 19/2025) → pad 3 chữ số
+  // Cả hai đều pad thành 3 chữ số vì cấu trúc CCCD dùng 3 số đầu
+  maTinhCCCD = pad(parseInt(this.value), 3);
+  loadHuyen(this.value);
+});
+
+document.getElementById('sel-huyen').addEventListener('change', function () {
+  const sx = document.getElementById('sel-xa');
+  xaList = [];
+  if (!this.value) {
+    sx.disabled = true; sx.innerHTML = '<option value="">– Tất cả (ngẫu nhiên) –</option>';
+    return;
+  }
+  loadXaCu(this.value);
+});
+
+/* ── Quê quán ── */
+function getQueQuan() {
+  const selT = document.getElementById('sel-tinh');
+  const selH = document.getElementById('sel-huyen');
+  const selX = document.getElementById('sel-xa');
+  if (!selT.value) return null;
+  const tT = selT.options[selT.selectedIndex].dataset.name || selT.options[selT.selectedIndex].textContent;
+  const hC = selH.value ? (selH.options[selH.selectedIndex].dataset.name || selH.options[selH.selectedIndex].textContent) : '';
+  const xC = selX.value ? (selX.options[selX.selectedIndex].dataset.name || selX.options[selX.selectedIndex].textContent) : '';
+
+  let qqBase = '';
+  if (diaBanMode === 'moi') {
+    // 2 cấp: xã/phường + tỉnh
+    if (xC) qqBase = xC + ', ' + tT;
+    else if (xaList.length > 0) qqBase = (rand(xaList).name || rand(xaList).full_name) + ', ' + tT;
+    else qqBase = tT;
+  } else {
+    // 3 cấp: xã + huyện + tỉnh
+    if (xC && hC) qqBase = xC + ', ' + hC + ', ' + tT;
+    else if (hC) qqBase = (xaList.length > 0 ? (rand(xaList).name || rand(xaList).full_name) + ', ' : '') + hC + ', ' + tT;
+    else if (huyenList.length > 0) qqBase = (rand(huyenList).name || rand(huyenList).full_name) + ', ' + tT;
+    else qqBase = tT;
+  }
+
+  return qqBase;
+}
+
+/* ── CCCD ── */
+// Cấu trúc: [3 mã tỉnh][1 mã gt+thế kỷ][2 năm sinh][6 ngẫu nhiên]
+// Mã gt+thế kỷ: TK20 Nam=0, Nữ=1 | TK21 Nam=2, Nữ=3
+function buildCCCD(gt, nam) {
+  let gtSo;
+  if (nam >= 2000) {
+    gtSo = gt === 'Nam' ? '2' : '3'; // Thế kỷ 21
+  } else {
+    gtSo = gt === 'Nam' ? '0' : '1'; // Thế kỷ 20
+  }
+  return maTinhCCCD + gtSo + pad(nam % 100, 2) + pad(randInt(0, 999999), 6);
+}
+
+/* ── Tên tự nhiên ── */
+function genTen(gt) {
+  const ho = rand(hoArr);
+  let dem, ten;
+  let attempts = 0;
+  if (gt === 'Nam') {
+    const dems = getDemNam(ho);
+    do {
+      dem = rand(dems);
+      ten = rand(tenNam);
+      attempts++;
+    } while (isBadCombo(dem, ten) && attempts < 20);
+    return ho + ' ' + dem + ' ' + ten;
+  } else {
+    const dems = getDemNu(ho);
+    do {
+      dem = rand(dems);
+      ten = rand(tenNu);
+      attempts++;
+    } while (isBadCombo(dem, ten) && attempts < 20);
+    return ho + ' ' + dem + ' ' + ten;
+  }
+}
+
+/* ── Phân bổ năm đều (stratified) ── */
+function buildYearPool(namTu, namDen, n) {
+  const range = namDen - namTu + 1;
+  const pool = [];
+  // Mỗi năm được ít nhất floor(n/range) slot, phần dư chia ngẫu nhiên
+  const base = Math.floor(n / range);
+  const extra = n - base * range;
+  const years = Array.from({length: range}, (_, i) => namTu + i);
+  const extraYears = shuffle(years).slice(0, extra);
+  const extraSet = new Set(extraYears);
+  years.forEach(y => {
+    const count = base + (extraSet.has(y) ? 1 : 0);
+    for (let i = 0; i < count; i++) pool.push(y);
+  });
+  return shuffle(pool);
+}
+
+/* ── Sinh giới tính theo tỉ lệ ── */
+function buildGenderPool(n, gtFilter, ratio) {
+  if (gtFilter === 'Nam') return Array(n).fill('Nam');
+  if (gtFilter === 'Nu') return Array(n).fill('Nữ');
+  const namCount = Math.round(n * ratio / 100);
+  const pool = [...Array(namCount).fill('Nam'), ...Array(n - namCount).fill('Nữ')];
+  return shuffle(pool);
+}
+
+/* ── GENERATE ── */
+function generate() {
+  if (!document.getElementById('sel-tinh').value) { toast('Vui lòng chọn tỉnh/thành phố trước.', 'err'); return; }
+  const n = Math.min(500, Math.max(1, parseInt(document.getElementById('inp-soLuong').value) || 20));
+  const namTu = parseInt(document.getElementById('inp-namTu').value) || 1970;
+  const namDen = parseInt(document.getElementById('inp-namDen').value) || 2005;
+  if (namTu > namDen) { toast('Năm sinh "từ" phải ≤ năm "đến".', 'err'); return; }
+
+  const gtFilter = document.getElementById('sel-gt').value;
+  const ratio = parseInt(document.getElementById('qc-gt-ratio').value); // % nam
+  const qcUnique = document.getElementById('qc-unique').checked;
+  const qcEvenYear = document.getElementById('qc-even-year').checked;
+  const qcNatural = document.getElementById('qc-natural-name').checked;
+  perPage = parseInt(document.getElementById('sel-perPage').value) || 20;
+
+  document.getElementById('tbody').innerHTML = '<tr class="loading-row"><td colspan="6"><span class="spinner"></span> Đang tạo ' + n + ' bản ghi...</td></tr>';
+
+  setTimeout(() => {
+    // Build pools
+    const yearPool = qcEvenYear ? buildYearPool(namTu, namDen, n) : null;
+    const genderPool = buildGenderPool(n, gtFilter, ratio);
+
+    const usedNames = new Set();
+    const usedCCCDs = new Set();
+    allData = [];
+    let dupCount = 0;
+
+    for (let i = 0; i < n; i++) {
+      const gt = genderPool[i];
+      const nam = yearPool ? yearPool[i] : randInt(namTu, namDen);
+      const m = randInt(1, 12);
+      const day = randInt(1, 28);
+
+      let ten, cccd;
+      let attempts = 0;
+
+      // Tên duy nhất
+      do {
+        ten = genTen(gt);
+        attempts++;
+      } while (qcUnique && usedNames.has(ten) && attempts < 50);
+
+      // CCCD duy nhất
+      attempts = 0;
+      do {
+        cccd = buildCCCD(gt, nam);
+        attempts++;
+      } while (qcUnique && usedCCCDs.has(cccd) && attempts < 100);
+
+      const isDup = (qcUnique && (usedNames.has(ten) || usedCCCDs.has(cccd)));
+      if (isDup) dupCount++;
+
+      usedNames.add(ten);
+      usedCCCDs.add(cccd);
+
+      allData.push({
+        idx: i + 1,
+        ten, gt,
+        ngaySinh: pad(day, 2) + '/' + pad(m, 2) + '/' + nam,
+        nam, cccd,
+        qq: getQueQuan() || tenTinhFull,
+        isDup
+      });
+    }
+
+    document.getElementById('inp-search').value = '';
+    sortCol = 'idx'; sortDir = 1;
+    updateSortHeaders();
+    applyFilter();
+    updateStats(n, dupCount, namTu, namDen);
+    toast('Đã tạo ' + n + ' bản ghi.', 'ok');
+  }, 60);
+}
+
+/* ── Stats ── */
+function updateStats(n, dupCount, namTu, namDen) {
+  const bar = document.getElementById('stats-bar');
+  bar.classList.add('visible');
+
+  const namCount = allData.filter(r => r.gt === 'Nam').length;
+  const nuCount = n - namCount;
+  const namPct = Math.round(namCount / n * 100);
+
+  // Phân bổ năm
+  const yearCounts = {};
+  allData.forEach(r => { yearCounts[r.nam] = (yearCounts[r.nam] || 0) + 1; });
+  const vals = Object.values(yearCounts);
+  const maxV = Math.max(...vals), minV = Math.min(...vals);
+  const spread = maxV - minV;
+  const yearLabel = spread <= 2 ? 'rất đều' : spread <= 5 ? 'khá đều' : 'có chênh lệch';
+
+  // Score
+  let score = 100;
+  if (dupCount > 0) score -= Math.min(40, dupCount * 5);
+  if (spread > 5) score -= 10;
+  if (spread > 10) score -= 10;
+  const gtDiff = Math.abs(namPct - 50);
+  if (gtDiff > 20) score -= 5;
+  score = Math.max(0, score);
+
+  document.getElementById('st-total').textContent = n;
+  document.getElementById('st-gt').textContent = namCount + ' / ' + nuCount;
+  document.getElementById('st-gt-sub').textContent = namPct + '% nam · ' + (100 - namPct) + '% nữ';
+  document.getElementById('st-year').textContent = namTu + '–' + namDen;
+  document.getElementById('st-year-sub').textContent = yearLabel + ' (' + (namDen - namTu + 1) + ' năm)';
+  const dupEl = document.getElementById('st-dup');
+  const dupSub = document.getElementById('st-dup-sub');
+  dupEl.textContent = dupCount;
+  dupEl.className = 'stat-val ' + (dupCount > 0 ? 'stat-warn' : 'stat-ok');
+  dupSub.textContent = dupCount > 0 ? 'dòng bị trùng' : 'hoàn toàn duy nhất';
+  const scoreEl = document.getElementById('st-score');
+  scoreEl.textContent = score;
+  scoreEl.className = 'stat-val ' + (score >= 90 ? 'stat-ok' : score >= 70 ? 'stat-warn' : 'stat-warn');
+  document.getElementById('st-score-sub').textContent = score >= 90 ? 'Xuất sắc' : score >= 70 ? 'Tốt' : 'Cần xem lại';
+
+  // Dup badge
+  const db = document.getElementById('dup-badge');
+  if (dupCount > 0) { db.textContent = dupCount + ' dòng trùng'; db.classList.add('visible'); }
+  else { db.classList.remove('visible'); }
+}
+
+/* ── Filter / Sort / Render ── */
+function applyFilter() {
+  const q = document.getElementById('inp-search').value.toLowerCase().trim();
+  filteredData = q
+    ? allData.filter(r => r.ten.toLowerCase().includes(q) || r.cccd.includes(q) || r.qq.toLowerCase().includes(q))
+    : [...allData];
+  filteredData.sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'nam') { va = a.nam; vb = b.nam; }
+    if (typeof va === 'string') return va.localeCompare(vb, 'vi') * sortDir;
+    return (va - vb) * sortDir;
+  });
+  currentPage = 1;
+  renderTable();
+}
+
+function filterTable() { applyFilter(); }
+
+function sortBy(col) {
+  sortDir = sortCol === col ? sortDir * -1 : 1;
+  sortCol = col;
+  updateSortHeaders();
+  applyFilter();
+}
+
+function updateSortHeaders() {
+  const cols = ['idx','ten','gt','nam','cccd','qq'];
+  document.querySelectorAll('thead th').forEach((th, i) => {
+    th.classList.toggle('sorted', cols[i] === sortCol);
+    const ic = th.querySelector('.sort-icon');
+    if (ic) ic.textContent = cols[i] === sortCol ? (sortDir === 1 ? '↑' : '↓') : '↕';
+  });
+}
+
+function renderTable() {
+  const total = filteredData.length;
+  const pp = perPage > 900000 ? total : perPage;
+  const totalPages = Math.max(1, Math.ceil(total / pp));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * pp;
+  const slice = filteredData.slice(start, start + pp);
+
+  document.getElementById('record-info').innerHTML = total === 0
+    ? 'Không có kết quả'
+    : `Hiển thị <span>${start+1}–${Math.min(start+pp,total)}</span> / <span>${total}</span> bản ghi`;
+
+  if (!slice.length) {
+    document.getElementById('tbody').innerHTML = `<tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>Không tìm thấy kết quả phù hợp.</p></div></td></tr>`;
+    document.getElementById('pagination').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML = slice.map((r, si) => {
+    const rowId = 'row-' + start + si;
+    return `
+    <tr${r.isDup ? ' class="is-dup"' : ''} data-row-id="${rowId}">
+      <td class="td-num">${r.idx}${r.isDup ? '<span class="qc-dot qc-dup" title="Trùng lặp"></span>' : ''}</td>
+      <td>
+        <div class="cell-wrap">
+          <span class="td-name">${escHtml(r.ten)}</span>
+          <button class="copy-btn" data-copy="${escAttr(r.ten)}" title="Copy tên">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </td>
+      <td>
+        <div class="cell-wrap">
+          <span class="badge ${r.gt==='Nam'?'badge-m':'badge-f'}">${r.gt}</span>
+          <button class="copy-btn" data-copy="${escAttr(r.gt)}" title="Copy giới tính">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </td>
+      <td>
+        <div class="cell-wrap">
+          <span class="td-dob">${r.ngaySinh}</span>
+          <button class="copy-btn" data-copy="${escAttr(r.ngaySinh)}" title="Copy ngày sinh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </td>
+      <td>
+        <div class="cell-wrap">
+          <span class="td-cccd">${r.cccd}</span>
+          <button class="copy-btn" data-copy="${escAttr(r.cccd)}" title="Copy số CCCD">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </td>
+      <td>
+        <div class="cell-wrap">
+          <span class="td-qq">${escHtml(r.qq)}</span>
+          <button class="copy-btn" data-copy="${escAttr(r.qq)}" title="Copy quê quán">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1 || pp >= total) { pag.style.display = 'none'; return; }
+  pag.style.display = 'flex';
+  document.getElementById('page-info').textContent = `Trang ${currentPage} / ${totalPages}`;
+  const range = buildPageRange(currentPage, totalPages);
+  document.getElementById('page-btns').innerHTML =
+    `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹</button>` +
+    range.map(p => p === '...'
+      ? `<button class="page-btn" disabled>…</button>`
+      : `<button class="page-btn${p===currentPage?' active':''}" onclick="goPage(${p})">${p}</button>`
+    ).join('') +
+    `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>›</button>`;
+}
+
+function buildPageRange(cur, total) {
+  if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  if (cur <= 4) return [1,2,3,4,5,'...',total];
+  if (cur >= total-3) return [1,'...',total-4,total-3,total-2,total-1,total];
+  return [1,'...',cur-1,cur,cur+1,'...',total];
+}
+
+function goPage(p) {
+  const pp = perPage > 900000 ? filteredData.length : perPage;
+  const total = Math.ceil(filteredData.length / pp);
+  if (p < 1 || p > total) return;
+  currentPage = p;
+  renderTable();
+  document.querySelector('.tbl-scroll').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+/* ── Export ── */
+function copyCSV() {
+  if (!allData.length) { toast('Chưa có dữ liệu.', 'err'); return; }
+  const hdr = 'STT,Họ và tên,Giới tính,Ngày sinh,Số CCCD,Quê quán';
+  const rows = allData.map(r => `${r.idx},"${r.ten}",${r.gt},${r.ngaySinh},${r.cccd},"${r.qq}"`);
+  copyText([hdr,...rows].join('\n'), 'Đã sao chép ' + allData.length + ' dòng CSV.');
+}
+
+function copyJSON() {
+  if (!allData.length) { toast('Chưa có dữ liệu.', 'err'); return; }
+  const obj = allData.map(({idx,ten,gt,ngaySinh,cccd,qq}) => ({stt:idx,ho_ten:ten,gioi_tinh:gt,ngay_sinh:ngaySinh,so_cccd:cccd,que_quan:qq}));
+  copyText(JSON.stringify(obj, null, 2), 'Đã sao chép JSON ' + allData.length + ' bản ghi.');
+}
+
+/* ── Clipboard helper — hỗ trợ cả Chrome PWA / file:// ── */
+function copyText(text, successMsg) {
+  // Thử Clipboard API trước
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => { if (successMsg) toast(successMsg, 'ok'); })
+      .catch(() => fallbackCopy(text, successMsg));
+  } else {
+    fallbackCopy(text, successMsg);
+  }
+}
+
+function fallbackCopy(text, successMsg) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) {
+      if (successMsg) toast(successMsg, 'ok');
+    } else {
+      toast('Không thể sao chép – hãy thử Ctrl+C.', 'err');
+    }
+  } catch {
+    toast('Không thể sao chép.', 'err');
+  }
+}
+
+/* ── Copy cell ── */
+function copyCell(btn, text) {
+  const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const ICON_OK   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
+
+  function onSuccess() {
+    btn.classList.add('copied');
+    btn.innerHTML = ICON_OK;
+    clearTimeout(btn._ct);
+    btn._ct = setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = ICON_COPY;
+    }, 1500);
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+      if (fallbackCopyRaw(text)) onSuccess();
+    });
+  } else {
+    if (fallbackCopyRaw(text)) onSuccess();
+  }
+}
+
+function fallbackCopyRaw(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
+
+/* ── Toast ── */
+function toast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  const ic = document.getElementById('toast-icon');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = 'show ' + type;
+  ic.innerHTML = type === 'ok'
+    ? '<polyline points="20 6 9 17 4 12"/>'
+    : type === 'warn'
+    ? '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+    : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = type; }, 3200);
+}
+
+// Khởi tạo UI theo mode mặc định (moi)
+document.getElementById('field-huyen').style.display = 'none';
+document.getElementById('lbl-xa').textContent = 'Phường / xã (mới)';
+document.getElementById('hint-diaban').textContent = 'Địa bàn mới (sau 1/7/2025) – chỉ có 2 cấp: Tỉnh/Thành phố và Xã/Phường. Không chọn xã → tự chọn ngẫu nhiên.';
+
+loadTinh();
+</script>
+</body>
+</html>
