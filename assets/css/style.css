@@ -984,3 +984,38 @@ footer {
   color: #999;
   margin-top: 2px;
 }
+
+/* ============================================
+   COUNTRY SECTIONS — tiêu đề + swiper theo quốc gia
+   ============================================ */
+
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+
+.section-flag {
+  font-size: 1.1em;
+  margin-right: 6px;
+  line-height: 1;
+}
+
+.section-view-all {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #aaa;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+.section-view-all:hover {
+  color: var(--accent-color);
+}
+
+/* Swiper quốc gia dùng lại card style của mySwiper */
+.countrySwiper .swiper-slide {
+  width: auto;
+}

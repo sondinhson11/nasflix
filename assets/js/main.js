@@ -241,90 +241,83 @@ async function fetchDescriptionForHero(source, slug) {
   }
 }
 
-async function fetchHomeMovies(page = 1, append = false) {
+async function fetchHomeMovies(page = 1) {
   if (isFetching) return;
   isFetching = true;
 
-  const grid = document.getElementById("movieGrid");
-  const slider = document.getElementById("trendingSlider");
+  const newUpdatedSlider = document.getElementById("movieGrid");
+  const trendingSlider   = document.getElementById("trendingSlider");
 
-  if (!grid || !slider) return;
+  if (!newUpdatedSlider || !trendingSlider) return;
 
-  if (!append) {
-    grid.innerHTML = Array(12)
-      .fill(
-        '<div class="col-6 col-md-3 col-lg-2"><div class="skeleton skeleton-card"></div></div>',
-      )
-      .join("");
-  }
+  // Skeleton cho cả 2 slider
+  const skeletonSlides = Array(10)
+    .fill('<div class="swiper-slide"><div class="skeleton skeleton-card"></div></div>')
+    .join("");
+  newUpdatedSlider.innerHTML = skeletonSlides;
 
   try {
     const movies = await fetchAndMergeMovies(page);
 
-    if (!append) {
-      grid.innerHTML = "";
-      slider.innerHTML = "";
-    }
+    trendingSlider.innerHTML = "";
+    newUpdatedSlider.innerHTML = "";
 
-    movies.forEach((movie, index) => {
-      if (!append && index === 0) {
+    const BLANK_IMG = "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 2 3%22><rect width=%222%22 height=%223%22 fill=%22%23222%22/></svg>";
+
+    // Tối đa 20 phim, index 0 dùng cho Hero Banner
+    const limited = movies.slice(0, 20);
+
+    limited.forEach((movie, index) => {
+      // Hero Banner — lấy phim đầu tiên
+      if (index === 0) {
         document.getElementById("heroBanner").style.backgroundImage =
           `url('${movie.poster}')`;
         document.getElementById("heroTitle").innerText = movie.name;
         document.getElementById("heroMeta").innerHTML =
-          `<span class="text-white border px-1 me-2" ">S</span> Series Mới Cập Nhật • ${movie.year}`;
+          `<span class="text-white border px-1 me-2">S</span> Series Mới Cập Nhật • ${movie.year}`;
 
         setMetaTags({
           title: `${movie.name} (${movie.year}) - SFLIX`,
-          description: `Xem ${movie.name} (${movie.year}) vietsub chất lượng cao trên SFLIX. Phim bộ, phim lẻ, hoạt hình cập nhật nhanh nhất.`,
+          description: `Xem ${movie.name} (${movie.year}) vietsub chất lượng cao trên SFLIX.`,
           image: movie.poster,
         });
 
-        const playBtn = document.getElementById("heroPlayBtn");
+        const playBtn  = document.getElementById("heroPlayBtn");
         const detailBtn = document.getElementById("heroDetailBtn");
-        playBtn.style.display = "inline-block";
+        playBtn.style.display  = "inline-block";
         detailBtn.style.display = "inline-block";
-
-        playBtn.onclick = () => goToDetail(movie.key);
+        playBtn.onclick  = () => goToDetail(movie.key);
         detailBtn.onclick = () => goToDetail(movie.key);
 
         if (movie.sources.length > 0) {
-          fetchDescriptionForHero(
-            movie.sources[0].source,
-            movie.sources[0].slug,
-          );
+          fetchDescriptionForHero(movie.sources[0].source, movie.sources[0].slug);
         }
       }
 
-      const duplicateBadge =
-        movie.sources.length > 1
-          ? `<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">${movie.sources.length} nguồn</span>`
-          : "";
-
-      const meta = formatMovieMeta(movie);
+      const meta     = formatMovieMeta(movie);
       const safeName = (movie.name || "").replace(/"/g, "&quot;");
       const thumbSrc = movie.thumb || movie.poster || "";
-      const BLANK_IMG = "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 2 3%22><rect width=%222%22 height=%223%22 fill=%22%23222%22/></svg>";
       const cardHTML = `
-                <a href="detail.html?movieKey=${encodeURIComponent(movie.key)}" class="movie-card position-relative">
-                    <img src="${thumbSrc || BLANK_IMG}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='${BLANK_IMG}';this.style.background='%23222';">
-                    ${duplicateBadge}
-                    <div class="movie-info">
-                        <div class="movie-title">${safeName}</div>
-                        <div class="movie-meta-card">${meta}</div>
-                    </div>
-                </a>
-            `;
+        <a href="detail.html?movieKey=${encodeURIComponent(movie.key)}" class="movie-card position-relative">
+          <img src="${thumbSrc || BLANK_IMG}" alt="${safeName}" loading="lazy"
+               onerror="this.onerror=null;this.src='${BLANK_IMG}';">
+          <div class="movie-info">
+            <div class="movie-title">${safeName}</div>
+            <div class="movie-meta-card">${meta}</div>
+          </div>
+        </a>`;
 
-      if (!append && index < 10)
-        slider.innerHTML += `<div class="swiper-slide">${cardHTML}</div>`;
-      else
-        grid.innerHTML += `<div class="col-6 col-md-3 col-lg-2">${cardHTML}</div>`;
+      const slide = `<div class="swiper-slide">${cardHTML}</div>`;
+
+      // 10 phim đầu → Thịnh Hành, 10 phim tiếp → Mới Cập Nhật
+      if (index < 10) trendingSlider.innerHTML   += slide;
+      else            newUpdatedSlider.innerHTML += slide;
     });
 
-    if (!append && window.Swiper) {
+    // Khởi tạo / refresh cả 2 swiper
+    if (window.Swiper) {
       if (swiperInstance) swiperInstance.destroy(true, true);
-      swiperInstance = new Swiper(".mySwiper", {
+      const swiperConfig = {
         slidesPerView: 2,
         spaceBetween: 10,
         breakpoints: {
@@ -334,7 +327,9 @@ async function fetchHomeMovies(page = 1, append = false) {
           1200: { slidesPerView: 6, spaceBetween: 15 },
         },
         freeMode: true,
-      });
+      };
+      swiperInstance = new Swiper(".mySwiper",  swiperConfig);
+      new Swiper(".mySwiper2", swiperConfig);
     }
   } catch (error) {
     console.error(error);
@@ -570,12 +565,106 @@ function switchToDetail() {
   window.scrollTo(0, 0);
 }
 
+// ============================================================
+//  COUNTRY SECTIONS — fetch & render slider theo quốc gia
+// ============================================================
+
+const COUNTRY_SWIPER_MAP = {}; // lưu instance swiper để tránh duplicate
+
+async function fetchCountrySection(countrySlug, sliderId, swiperId) {
+  const sliderEl = document.getElementById(sliderId);
+  if (!sliderEl) return;
+
+  try {
+    const res = await axios.get(
+      `https://phimapi.com/v1/api/quoc-gia/${countrySlug}`,
+      { params: { page: 1, limit: 20 } }
+    );
+
+    const raw = res.data?.data?.items || [];
+
+    // Sắp xếp theo modified.time mới nhất trước
+    const items = raw.slice().sort((a, b) => {
+      const ta = a.modified?.time ? new Date(a.modified.time).getTime() : 0;
+      const tb = b.modified?.time ? new Date(b.modified.time).getTime() : 0;
+      return tb - ta;
+    });
+
+    if (!items.length) {
+      sliderEl.innerHTML =
+        '<div class="swiper-slide"><p class="text-muted small px-2">Không có dữ liệu.</p></div>';
+      return;
+    }
+
+    const BLANK_IMG =
+      "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 2 3%22><rect width=%222%22 height=%223%22 fill=%22%23222%22/></svg>";
+
+    sliderEl.innerHTML = items
+      .map((item) => {
+        // Chuẩn hoá URL ảnh (phimapi trả path tương đối)
+        let thumb = item.thumb_url || item.poster_url || "";
+        if (thumb === "null" || thumb === "undefined") thumb = "";
+        if (thumb && !thumb.startsWith("http")) {
+          // phimapi v1 dùng path dạng "upload/..." hoặc "uploads/..."
+          thumb = "https://phimapi.com/" + thumb;
+        }
+
+        const key = `${(item.name || "").trim().toLowerCase()}|${item.year || ""}`;
+        const href = `detail.html?movieKey=${encodeURIComponent(key)}&slug=${encodeURIComponent(item.slug || "")}`;
+        const safeName = (item.name || "").replace(/"/g, "&quot;");
+        const ep = item.episode_current || item.time || (item.year ? String(item.year) : "");
+
+        return `
+          <div class="swiper-slide">
+            <a href="${href}" class="movie-card position-relative">
+              <img
+                src="${thumb || BLANK_IMG}"
+                alt="${safeName}"
+                loading="lazy"
+                onerror="this.onerror=null;this.src='${BLANK_IMG}';"
+              />
+              <div class="movie-info">
+                <div class="movie-title">${safeName}</div>
+                ${ep ? `<div class="movie-meta-card">${ep}</div>` : ""}
+              </div>
+            </a>
+          </div>`;
+      })
+      .join("");
+
+    // Khởi tạo swiper (destroy cũ nếu có)
+    if (COUNTRY_SWIPER_MAP[swiperId]) {
+      COUNTRY_SWIPER_MAP[swiperId].destroy(true, true);
+    }
+    COUNTRY_SWIPER_MAP[swiperId] = new Swiper(`#${swiperId}`, {
+      slidesPerView: 2,
+      spaceBetween: 10,
+      breakpoints: {
+        576: { slidesPerView: 3, spaceBetween: 15 },
+        768: { slidesPerView: 4, spaceBetween: 15 },
+        992: { slidesPerView: 5, spaceBetween: 15 },
+        1200: { slidesPerView: 6, spaceBetween: 15 },
+      },
+      freeMode: true,
+    });
+  } catch (err) {
+    console.error(`fetchCountrySection(${countrySlug}) error:`, err);
+    const sliderEl2 = document.getElementById(sliderId);
+    if (sliderEl2) {
+      sliderEl2.innerHTML =
+        '<div class="swiper-slide"><p class="text-danger small px-2">Lỗi tải dữ liệu.</p></div>';
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("view-home")) {
-    fetchHomeMovies(1, false);
-    document
-      .getElementById("loadMoreBtn")
-      .addEventListener("click", () => fetchHomeMovies(++currentPage, true));
+    fetchHomeMovies(1);
+
+    // Load 3 section quốc gia song song
+    fetchCountrySection("han-quoc",   "sliderHanQuoc",   "swiperHanQuoc");
+    fetchCountrySection("trung-quoc", "sliderTrungQuoc", "swiperTrungQuoc");
+    fetchCountrySection("au-my",      "sliderAuMy",      "swiperAuMy");
   } else if (document.getElementById("view-detail")) {
     loadMovieDetail();
   }
