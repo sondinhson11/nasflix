@@ -103,24 +103,23 @@ function getMergedMoviesMap() {
 
 function normalizeData(source, data) {
   const items = data.items || [];
-  const domainImg = source === "phimapi" ? data.pathImage || "" : "";
+  // pathImage từ phimapi đôi khi null — luôn fallback về chuỗi rỗng
+  const domainImg = source === "phimapi" ? (data.pathImage || "") : "";
+  const ophimBase = "https://img.ophim.live/uploads/movies/";
+
+  function fixUrl(raw) {
+    // Bỏ qua null, undefined, chuỗi "null", "undefined", rỗng
+    if (!raw || raw === "null" || raw === "undefined") return "";
+    if (raw.startsWith("http")) return raw;
+    // Nếu domainImg rỗng (phimapi không trả pathImage) thì không ghép vô nghĩa
+    const base = source === "ophim" ? ophimBase : domainImg;
+    if (!base) return "";
+    return base + raw;
+  }
 
   return items.map((item) => {
-    let thumb = item.thumb_url;
-    let poster = item.poster_url;
-
-    if (thumb && !thumb.startsWith("http")) {
-      thumb =
-        (source === "ophim"
-          ? "https://img.ophim.live/uploads/movies/"
-          : domainImg) + item.thumb_url;
-    }
-    if (poster && !poster.startsWith("http")) {
-      poster =
-        (source === "ophim"
-          ? "https://img.ophim.live/uploads/movies/"
-          : domainImg) + item.poster_url;
-    }
+    let thumb = fixUrl(item.thumb_url);
+    let poster = fixUrl(item.poster_url);
 
     // Một số endpoint (vd /phim-moi-cap-nhat) không trả về `type`,
     // nhưng có `tmdb.type` = "tv" (series) hoặc "movie" (single).
@@ -304,9 +303,11 @@ async function fetchHomeMovies(page = 1, append = false) {
 
       const meta = formatMovieMeta(movie);
       const safeName = (movie.name || "").replace(/"/g, "&quot;");
+      const thumbSrc = movie.thumb || movie.poster || "";
+      const BLANK_IMG = "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 2 3%22><rect width=%222%22 height=%223%22 fill=%22%23222%22/></svg>";
       const cardHTML = `
                 <a href="detail.html?movieKey=${encodeURIComponent(movie.key)}" class="movie-card position-relative">
-                    <img src="${movie.thumb}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 9%22><rect width=%2216%22 height=%229%22 fill=%22%23222%22/></svg>';this.style.background='%23222';">
+                    <img src="${thumbSrc || BLANK_IMG}" alt="${safeName}" loading="lazy" onerror="this.onerror=null;this.src='${BLANK_IMG}';this.style.background='%23222';">
                     ${duplicateBadge}
                     <div class="movie-info">
                         <div class="movie-title">${safeName}</div>
@@ -345,19 +346,21 @@ async function fetchHomeMovies(page = 1, append = false) {
 async function fetchSourceDetail(source, slug) {
   const response = await axios.get(`${API_CONFIG[source].detail}${slug}`);
   const movieData = response.data.movie;
+  const ophimBase = "https://img.ophim.live/uploads/movies/";
   const domainImg =
     source === "ophim"
-      ? "https://img.ophim.live/uploads/movies/"
+      ? ophimBase
       : response.data.pathImage || "";
 
-  let thumb = movieData.thumb_url;
-  let poster = movieData.poster_url;
-  if (thumb && !thumb.startsWith("http")) {
-    thumb = domainImg + thumb;
+  function fixUrl(raw) {
+    if (!raw || raw === "null" || raw === "undefined") return "";
+    if (raw.startsWith("http")) return raw;
+    if (!domainImg) return "";
+    return domainImg + raw;
   }
-  if (poster && !poster.startsWith("http")) {
-    poster = domainImg + poster;
-  }
+
+  const thumb = fixUrl(movieData.thumb_url);
+  const poster = fixUrl(movieData.poster_url);
 
   const episodes = response.data.episodes?.[0]?.server_data || [];
 
