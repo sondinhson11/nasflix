@@ -630,6 +630,8 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((movie) => {
         // Chuẩn hóa ảnh
         let thumb = movie.thumb_url || movie.poster_url || "";
+        // Bỏ qua giá trị "null" dạng chuỗi từ API
+        if (thumb === "null" || thumb === "undefined") thumb = "";
         if (thumb && !thumb.startsWith("http")) {
           thumb = "https://img.ophim.live/uploads/movies/" + thumb;
         }
@@ -707,11 +709,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const input = document.getElementById("searchInput");
     const closeBtn = document.getElementById("searchCloseBtn");
     const btnDesktop = document.getElementById("searchBtnDesktop");
-    const btnMobile = document.getElementById("searchBtnMobile");
 
     // Mở overlay
     if (btnDesktop) btnDesktop.addEventListener("click", openSearch);
-    if (btnMobile) btnMobile.addEventListener("click", openSearch);
 
     // Đóng overlay
     if (closeBtn) closeBtn.addEventListener("click", closeSearch);
