@@ -103,17 +103,18 @@ function getMergedMoviesMap() {
 
 function normalizeData(source, data) {
   const items = data.items || [];
-  const ophimBase  = "https://img.ophim.live/uploads/movies/";
-  const phimapiBase = "https://img.phimapi.com/";
-  // pathImage từ API cũ — dùng làm base nếu có, không thì fallback về CDN
-  const domainImg = source === "phimapi" ? (data.pathImage || phimapiBase) : "";
+  const ophimBase   = "https://img.ophim.live/uploads/movies/";
+  // Lấy CDN domain từ response API (phimapi v1 trả APP_DOMAIN_CDN_IMAGE)
+  const cdnFromApi  = data.APP_DOMAIN_CDN_IMAGE || "";
+  const phimapiBase = cdnFromApi || data.pathImage || "https://phimimg.com";
 
   function fixUrl(raw) {
     if (!raw || raw === "null" || raw === "undefined") return "";
     if (raw.startsWith("http")) return raw;
-    const base = source === "ophim" ? ophimBase : domainImg;
+    const base = source === "ophim" ? ophimBase : phimapiBase;
     if (!base) return "";
-    return base + raw;
+    // Tránh double slash
+    return base.replace(/\/$/, "") + "/" + raw.replace(/^\//, "");
   }
 
   return items.map((item) => {
@@ -341,16 +342,17 @@ async function fetchSourceDetail(source, slug) {
   const response = await axios.get(`${API_CONFIG[source].detail}${slug}`);
   const movieData = response.data.movie;
   const ophimBase = "https://img.ophim.live/uploads/movies/";
+  const cdnFromApi = response.data.APP_DOMAIN_CDN_IMAGE || "";
   const domainImg =
     source === "ophim"
       ? ophimBase
-      : response.data.pathImage || "https://img.phimapi.com/";
+      : cdnFromApi || response.data.pathImage || "https://phimimg.com";
 
   function fixUrl(raw) {
     if (!raw || raw === "null" || raw === "undefined") return "";
     if (raw.startsWith("http")) return raw;
     if (!domainImg) return "";
-    return domainImg + raw;
+    return domainImg.replace(/\/$/, "") + "/" + raw.replace(/^\//, "");
   }
 
   const thumb = fixUrl(movieData.thumb_url);
@@ -580,7 +582,9 @@ async function fetchCountrySection(countrySlug, sliderId, swiperId) {
       { params: { page: 1, limit: 20 } }
     );
 
-    const raw = res.data?.data?.items || [];
+    const raw  = res.data?.data?.items || [];
+    // CDN ảnh đúng từ API trả về
+    const cdn  = res.data?.data?.APP_DOMAIN_CDN_IMAGE || "https://phimimg.com";
 
     // Sắp xếp theo modified.time mới nhất trước
     const items = raw.slice().sort((a, b) => {
@@ -600,11 +604,11 @@ async function fetchCountrySection(countrySlug, sliderId, swiperId) {
 
     sliderEl.innerHTML = items
       .map((item) => {
-        // Chuẩn hoá URL ảnh — phimapi v1 dùng img.phimapi.com làm CDN
+        // Chuẩn hoá URL ảnh dùng CDN lấy từ API
         let thumb = item.thumb_url || item.poster_url || "";
         if (thumb === "null" || thumb === "undefined") thumb = "";
         if (thumb && !thumb.startsWith("http")) {
-          thumb = "https://img.phimapi.com/" + thumb;
+          thumb = cdn + "/" + thumb;
         }
 
         const key = `${(item.name || "").trim().toLowerCase()}|${item.year || ""}`;
