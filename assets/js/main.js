@@ -577,3 +577,183 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMovieDetail();
   }
 });
+
+// ============================================================
+//  SEARCH — tìm kiếm phim theo tên qua phimapi
+// ============================================================
+
+(function () {
+  const SEARCH_API = "https://phimapi.com/v1/api/tim-kiem";
+  let searchTimer = null;
+  let lastQuery = "";
+
+  // ---- helpers ----
+
+  function openSearch() {
+    const overlay = document.getElementById("searchOverlay");
+    if (!overlay) return;
+    overlay.hidden = false;
+    document.body.style.overflow = "hidden";
+    setTimeout(() => {
+      const input = document.getElementById("searchInput");
+      if (input) input.focus();
+    }, 50);
+  }
+
+  function closeSearch() {
+    const overlay = document.getElementById("searchOverlay");
+    if (!overlay) return;
+    overlay.hidden = true;
+    document.body.style.overflow = "";
+    const input = document.getElementById("searchInput");
+    if (input) input.value = "";
+    lastQuery = "";
+    const results = document.getElementById("searchResults");
+    if (results) results.innerHTML = "";
+  }
+
+  function showStatus(html) {
+    const el = document.getElementById("searchResults");
+    if (el) el.innerHTML = `<div class="search-status">${html}</div>`;
+  }
+
+  function renderSearchResults(movies) {
+    const el = document.getElementById("searchResults");
+    if (!el) return;
+
+    if (!movies || movies.length === 0) {
+      showStatus("Không tìm thấy phim nào phù hợp.");
+      return;
+    }
+
+    const cards = movies
+      .map((movie) => {
+        // Chuẩn hóa ảnh
+        let thumb = movie.thumb_url || movie.poster_url || "";
+        if (thumb && !thumb.startsWith("http")) {
+          thumb = "https://img.ophim.live/uploads/movies/" + thumb;
+        }
+        const fallback =
+          "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 3'><rect width='2' height='3' fill='%23222'/></svg>";
+
+        // Key để sang trang detail
+        const key = `${(movie.name || "").trim().toLowerCase()}|${movie.year || ""}`;
+        const href = `detail.html?movieKey=${encodeURIComponent(key)}&slug=${encodeURIComponent(movie.slug || "")}`;
+
+        const safeName = (movie.name || "").replace(/"/g, "&quot;");
+        const meta = movie.year
+          ? movie.episode_current
+            ? `${movie.year} • ${movie.episode_current}`
+            : String(movie.year)
+          : "";
+
+        return `
+          <a href="${href}" class="search-result-card" title="${safeName}">
+            <img
+              src="${thumb || fallback}"
+              alt="${safeName}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='${fallback}';"
+            />
+            <div class="search-result-info">
+              <div class="search-result-name">${safeName}</div>
+              ${meta ? `<div class="search-result-meta">${meta}</div>` : ""}
+            </div>
+          </a>`;
+      })
+      .join("");
+
+    el.innerHTML = `<div class="search-grid">${cards}</div>`;
+  }
+
+  async function doSearch(query) {
+    query = query.trim();
+    if (!query) {
+      const el = document.getElementById("searchResults");
+      if (el) el.innerHTML = "";
+      return;
+    }
+    if (query === lastQuery) return;
+    lastQuery = query;
+
+    showStatus(
+      '<i class="fa-solid fa-spinner fa-spin d-block mx-auto mb-2"></i>Đang tìm kiếm...'
+    );
+
+    try {
+      const res = await axios.get(SEARCH_API, {
+        params: { keyword: query, limit: 24 },
+      });
+
+      // phimapi trả về data.data.items hoặc data.items
+      const items =
+        res.data?.data?.items ||
+        res.data?.items ||
+        [];
+
+      renderSearchResults(items);
+    } catch (err) {
+      console.error("Search error:", err);
+      showStatus("Không thể tìm kiếm lúc này. Vui lòng thử lại.");
+    }
+  }
+
+  // ---- wire up events after DOM ready ----
+
+  function initSearch() {
+    const overlay = document.getElementById("searchOverlay");
+    if (!overlay) return; // trang không có overlay thì bỏ qua
+
+    const input = document.getElementById("searchInput");
+    const closeBtn = document.getElementById("searchCloseBtn");
+    const btnDesktop = document.getElementById("searchBtnDesktop");
+    const btnMobile = document.getElementById("searchBtnMobile");
+
+    // Mở overlay
+    if (btnDesktop) btnDesktop.addEventListener("click", openSearch);
+    if (btnMobile) btnMobile.addEventListener("click", openSearch);
+
+    // Đóng overlay
+    if (closeBtn) closeBtn.addEventListener("click", closeSearch);
+
+    // Click vào phần backdrop (ngoài search-box) để đóng
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeSearch();
+    });
+
+    // Phím Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !overlay.hidden) closeSearch();
+    });
+
+    // Gõ vào ô input — debounce 400ms
+    if (input) {
+      input.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        const q = input.value.trim();
+        if (!q) {
+          lastQuery = "";
+          const el = document.getElementById("searchResults");
+          if (el) el.innerHTML = "";
+          return;
+        }
+        searchTimer = setTimeout(() => doSearch(q), 400);
+      });
+
+      // Enter ngay lập tức
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          clearTimeout(searchTimer);
+          doSearch(input.value);
+        }
+      });
+    }
+  }
+
+  // Chạy sau khi DOM sẵn sàng (file này load ở cuối body nên thường đã sẵn)
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initSearch);
+  } else {
+    initSearch();
+  }
+})();

@@ -40,12 +40,39 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom fixed-top" id="navbar">
       <div class="container-fluid px-4 px-lg-5">
-        <a class="brand-logo" href="index.html"
-          ><i class="fa-solid fa-play"></i> NAS<span>FLIX</span></a
-        >
-        <div class="d-flex align-items-center gap-3 ms-auto"></div>
+        <a class="brand-logo" href="index.html">SFLIX</a>
+        <div class="d-flex align-items-center gap-3 ms-auto">
+          <button
+            class="btn-search-mobile"
+            id="searchBtnMobile"
+            aria-label="Tìm kiếm"
+          >
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
       </div>
     </nav>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay" hidden>
+      <div class="search-overlay-inner">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon-input"></i>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Tìm kiếm phim..."
+            autocomplete="off"
+            autofocus
+          />
+          <button class="search-close-btn" id="searchCloseBtn" aria-label="Đóng">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </div>
 
     <!-- Content Trang Chi Tiết -->
     <div id="view-detail">

@@ -44,6 +44,15 @@
       <div class="container-fluid px-3 px-md-5">
         <a class="brand-logo me-4" href="index.html">SFLIX</a>
 
+        <!-- Nút tìm kiếm mobile (hiện trên điện thoại) -->
+        <button
+          class="btn-search-mobile d-lg-none"
+          id="searchBtnMobile"
+          aria-label="Tìm kiếm"
+        >
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+
         <button
           class="navbar-toggler border-0 shadow-none text-white"
           type="button"
@@ -82,12 +91,12 @@
                 >Hoạt Hình</a
               >
             </li>
-
           </ul>
 
           <div class="d-flex align-items-center gap-4 mt-3 mt-lg-0">
             <i
               class="fa-solid fa-magnifying-glass text-white fs-5 cursor-pointer d-none d-lg-block"
+              id="searchBtnDesktop"
               title="Tìm kiếm"
             ></i>
             <i
@@ -104,6 +113,27 @@
         </div>
       </div>
     </nav>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay" hidden>
+      <div class="search-overlay-inner">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon-input"></i>
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Tìm kiếm phim..."
+            autocomplete="off"
+            autofocus
+          />
+          <button class="search-close-btn" id="searchCloseBtn" aria-label="Đóng">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </div>
 
     <!-- Main Content -->
     <div id="view-catalog" style="padding-top: 80px">
