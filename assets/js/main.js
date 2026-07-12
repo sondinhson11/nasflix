@@ -103,15 +103,14 @@ function getMergedMoviesMap() {
 
 function normalizeData(source, data) {
   const items = data.items || [];
-  // pathImage từ phimapi đôi khi null — luôn fallback về chuỗi rỗng
-  const domainImg = source === "phimapi" ? (data.pathImage || "") : "";
-  const ophimBase = "https://img.ophim.live/uploads/movies/";
+  const ophimBase  = "https://img.ophim.live/uploads/movies/";
+  const phimapiBase = "https://img.phimapi.com/";
+  // pathImage từ API cũ — dùng làm base nếu có, không thì fallback về CDN
+  const domainImg = source === "phimapi" ? (data.pathImage || phimapiBase) : "";
 
   function fixUrl(raw) {
-    // Bỏ qua null, undefined, chuỗi "null", "undefined", rỗng
     if (!raw || raw === "null" || raw === "undefined") return "";
     if (raw.startsWith("http")) return raw;
-    // Nếu domainImg rỗng (phimapi không trả pathImage) thì không ghép vô nghĩa
     const base = source === "ophim" ? ophimBase : domainImg;
     if (!base) return "";
     return base + raw;
@@ -345,7 +344,7 @@ async function fetchSourceDetail(source, slug) {
   const domainImg =
     source === "ophim"
       ? ophimBase
-      : response.data.pathImage || "";
+      : response.data.pathImage || "https://img.phimapi.com/";
 
   function fixUrl(raw) {
     if (!raw || raw === "null" || raw === "undefined") return "";
@@ -601,12 +600,11 @@ async function fetchCountrySection(countrySlug, sliderId, swiperId) {
 
     sliderEl.innerHTML = items
       .map((item) => {
-        // Chuẩn hoá URL ảnh (phimapi trả path tương đối)
+        // Chuẩn hoá URL ảnh — phimapi v1 dùng img.phimapi.com làm CDN
         let thumb = item.thumb_url || item.poster_url || "";
         if (thumb === "null" || thumb === "undefined") thumb = "";
         if (thumb && !thumb.startsWith("http")) {
-          // phimapi v1 dùng path dạng "upload/..." hoặc "uploads/..."
-          thumb = "https://phimapi.com/" + thumb;
+          thumb = "https://img.phimapi.com/" + thumb;
         }
 
         const key = `${(item.name || "").trim().toLowerCase()}|${item.year || ""}`;
