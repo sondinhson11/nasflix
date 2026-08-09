@@ -77,10 +77,11 @@
   --t-slow: 600ms;
 
   /* ====== FONTS ====== */
-  --font-base: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, sans-serif;
-  --font-display: "Inter", "Be Vietnam Pro", -apple-system, BlinkMacSystemFont,
+  --font-base:
+    "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
+  --font-display:
+    "Inter", "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
 }
 
@@ -117,9 +118,21 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 10% 0%, rgba(0, 212, 255, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 90% 100%, rgba(124, 58, 237, 0.12) 0%, transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.04) 0%, transparent 60%);
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(0, 212, 255, 0.12) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 90% 100%,
+      rgba(124, 58, 237, 0.12) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(0, 212, 255, 0.04) 0%,
+      transparent 60%
+    );
   pointer-events: none;
   z-index: -1;
 }
@@ -135,7 +148,11 @@ body::after {
   pointer-events: none;
   z-index: -1;
   mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(
+    ellipse at center,
+    black 0%,
+    transparent 70%
+  );
 }
 
 img {
@@ -292,6 +309,298 @@ button {
   box-shadow: 0 0 16px var(--accent-glow);
 }
 
+.drive-admin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(0, 112, 255, 0.18),
+      transparent 35%
+    ),
+    rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.drive-admin-overlay[hidden] {
+  display: none;
+}
+.drive-admin-panel {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 48px);
+  background: linear-gradient(
+    180deg,
+    rgba(14, 18, 30, 0.98),
+    rgba(10, 14, 24, 0.99)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.drive-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.drive-admin-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.02em;
+}
+.drive-admin-subtitle {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.95rem;
+  max-width: 320px;
+}
+.drive-admin-close {
+  border: none;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition:
+    background var(--t-fast),
+    transform var(--t-fast);
+}
+.drive-admin-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(1.05);
+}
+.drive-admin-body {
+  padding: 24px 28px 28px;
+  overflow: auto;
+}
+.drive-admin-login,
+.drive-admin-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.drive-admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.drive-admin-field label {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 500;
+}
+.drive-admin-field input,
+.drive-admin-field textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f5f8ff;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+.drive-admin-field input:focus,
+.drive-admin-field textarea:focus {
+  border-color: rgba(0, 172, 255, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 172, 255, 0.12);
+}
+.drive-admin-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+.drive-admin-checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.drive-admin-checkbox-field input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.drive-admin-actions,
+.drive-admin-actions-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.drive-admin-btn {
+  border: none;
+  border-radius: 16px;
+  padding: 13px 20px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition:
+    transform var(--t-fast),
+    background var(--t-fast),
+    color var(--t-fast),
+    box-shadow var(--t-fast);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+.drive-admin-btn:hover {
+  transform: translateY(-1px);
+}
+.drive-admin-btn-primary {
+  background: linear-gradient(135deg, #00c3ff, #006aff);
+  color: #fff;
+}
+.drive-admin-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f8ff;
+}
+.drive-admin-message {
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.95rem;
+  min-height: 1.4rem;
+  line-height: 1.4;
+}
+.drive-admin-movie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.drive-admin-movie-item {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 18px;
+  align-items: stretch;
+  padding: 18px 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.drive-admin-movie-thumb {
+  width: 96px;
+  height: 140px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.drive-admin-movie-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.drive-admin-movie-main {
+  display: flex;
+  flex-direction: column;
+}
+.drive-admin-movie-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.drive-admin-movie-title {
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+.drive-admin-movie-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+}
+.drive-admin-movie-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.drive-admin-action-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f8ff;
+  cursor: pointer;
+  transition:
+    background var(--t-fast),
+    transform var(--t-fast);
+}
+.drive-admin-action-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+.drive-admin-form h4 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.drive-admin-movie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.drive-admin-movie-item {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 18px;
+  align-items: stretch;
+  padding: 18px 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.drive-admin-movie-thumb {
+  width: 96px;
+  height: 140px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.drive-admin-movie-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.drive-admin-movie-main {
+  display: flex;
+  flex-direction: column;
+}
+.drive-admin-movie-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.drive-admin-movie-title {
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+.drive-admin-movie-subtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+}
+.drive-admin-movie-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
 .navbar-toggler {
   color: var(--text-primary) !important;
   font-size: 1.2rem !important;
@@ -334,10 +643,30 @@ button {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(110deg, rgba(5, 8, 16, 0.92) 0%, rgba(5, 8, 16, 0.7) 35%, rgba(5, 8, 16, 0.35) 65%, transparent 95%),
-    linear-gradient(180deg, rgba(5, 8, 16, 0.5) 0%, transparent 35%, transparent 55%, var(--bg-base) 100%),
-    radial-gradient(circle at 70% 30%, rgba(0, 212, 255, 0.1) 0%, transparent 45%),
-    radial-gradient(circle at 30% 80%, rgba(124, 58, 237, 0.12) 0%, transparent 45%);
+    linear-gradient(
+      110deg,
+      rgba(5, 8, 16, 0.92) 0%,
+      rgba(5, 8, 16, 0.7) 35%,
+      rgba(5, 8, 16, 0.35) 65%,
+      transparent 95%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(5, 8, 16, 0.5) 0%,
+      transparent 35%,
+      transparent 55%,
+      var(--bg-base) 100%
+    ),
+    radial-gradient(
+      circle at 70% 30%,
+      rgba(0, 212, 255, 0.1) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 30% 80%,
+      rgba(124, 58, 237, 0.12) 0%,
+      transparent 45%
+    );
   z-index: 1;
   pointer-events: none;
 }
@@ -643,8 +972,15 @@ button {
 .movie-card:hover {
   /* KHÔNG dùng transform để tránh card bị cắt góc / che card khác */
   border-color: var(--accent);
-  box-shadow: var(--sh-lg), 0 0 0 1px var(--accent), 0 0 32px var(--accent-glow);
-  background: linear-gradient(180deg, var(--bg-card-solid) 0%, rgba(0, 212, 255, 0.04) 100%);
+  box-shadow:
+    var(--sh-lg),
+    0 0 0 1px var(--accent),
+    0 0 32px var(--accent-glow);
+  background: linear-gradient(
+    180deg,
+    var(--bg-card-solid) 0%,
+    rgba(0, 212, 255, 0.04) 100%
+  );
 }
 
 .movie-card .poster-wrap {
@@ -654,7 +990,10 @@ button {
   overflow: hidden;
   background-color: var(--bg-elevated);
   /* Ảnh backdrop 16/9 dùng làm blurred background dưới poster 2/3 */
-  background-image: var(--card-bg, linear-gradient(135deg, #1a1a24 0%, #0b0b0f 100%));
+  background-image: var(
+    --card-bg,
+    linear-gradient(135deg, #1a1a24 0%, #0b0b0f 100%)
+  );
   background-size: cover;
   background-position: center;
   filter: blur(0); /* wrapper giữ sắc nét */
@@ -665,12 +1004,16 @@ button {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg,
+    linear-gradient(
+      90deg,
       transparent 0%,
       rgba(255, 255, 255, 0.04) 50%,
-      transparent 100%),
+      transparent 100%
+    ),
     linear-gradient(135deg, #1a1a24 0%, #0b0b0f 100%);
-  background-size: 200% 100%, cover;
+  background-size:
+    200% 100%,
+    cover;
   animation: skeleton-shimmer 1.5s linear infinite;
   z-index: 1;
   transition: opacity 0.3s ease;
@@ -682,8 +1025,16 @@ button {
 }
 
 @keyframes skeleton-shimmer {
-  0% { background-position: -100% 0, center; }
-  100% { background-position: 200% 0, center; }
+  0% {
+    background-position:
+      -100% 0,
+      center;
+  }
+  100% {
+    background-position:
+      200% 0,
+      center;
+  }
 }
 
 .movie-card img {
@@ -693,7 +1044,9 @@ button {
   object-position: center top;
   /* Fade-in khi loaded */
   opacity: 0;
-  transition: opacity 0.4s ease, filter var(--t-base) var(--ease-out);
+  transition:
+    opacity 0.4s ease,
+    filter var(--t-base) var(--ease-out);
   display: block;
   image-rendering: -webkit-optimize-contrast;
   position: relative;
@@ -712,7 +1065,11 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(5, 8, 16, 0.85) 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 50%,
+    rgba(5, 8, 16, 0.85) 100%
+  );
   opacity: 0;
   transition: opacity var(--t-base);
   pointer-events: none;
@@ -852,10 +1209,12 @@ button {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg,
+  background: linear-gradient(
+    180deg,
     rgba(5, 8, 16, 0.5) 0%,
     rgba(5, 8, 16, 0.85) 70%,
-    var(--bg-base) 100%);
+    var(--bg-base) 100%
+  );
 }
 
 .detail-container {
@@ -897,7 +1256,10 @@ button {
   aspect-ratio: 2/3;
   object-fit: cover;
   border-radius: var(--r-lg);
-  box-shadow: var(--sh-lg), 0 0 0 1px var(--border), 0 0 60px rgba(0, 212, 255, 0.25);
+  box-shadow:
+    var(--sh-lg),
+    0 0 0 1px var(--border),
+    0 0 60px rgba(0, 212, 255, 0.25);
   margin: 0 auto;
   display: block;
   image-rendering: high-quality;
@@ -994,7 +1356,12 @@ button {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent) 50%,
+    transparent 100%
+  );
   opacity: 0.5;
 }
 .detail-content-card h5 {
@@ -1215,12 +1582,16 @@ body.player-page {
 }
 
 @keyframes searchFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .search-overlay-inner {
-  width: min(96vw, 1200px);   /* responsive: theo viewport, max 1200px */
+  width: min(96vw, 1200px); /* responsive: theo viewport, max 1200px */
   padding: 0 var(--sp-3);
   margin: 0 auto;
 }
@@ -1240,7 +1611,9 @@ body.player-page {
 }
 .search-box:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft), 0 0 32px var(--accent-glow);
+  box-shadow:
+    0 0 0 4px var(--accent-soft),
+    0 0 32px var(--accent-glow);
 }
 
 .search-icon-input {
@@ -1376,13 +1749,13 @@ body.player-page {
 .search-result-card img {
   width: 100%;
   max-width: 100%;
-  height: auto;            /* dùng aspect-ratio để suy ra height */
+  height: auto; /* dùng aspect-ratio để suy ra height */
   aspect-ratio: 2 / 3;
-  max-height: 320px;       /* chặn poster siêu cao trên màn hẹp */
+  max-height: 320px; /* chặn poster siêu cao trên màn hẹp */
   object-fit: cover;
   background: var(--bg-elevated);
   display: block;
-  flex-shrink: 0;          /* không co lại khi flex column */
+  flex-shrink: 0; /* không co lại khi flex column */
 }
 .search-result-info {
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
@@ -1481,8 +1854,15 @@ body.player-page {
   inset: 0;
   border-radius: var(--r-lg);
   padding: 1px;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), transparent 50%, rgba(124, 58, 237, 0.3));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 255, 0.3),
+    transparent 50%,
+    rgba(124, 58, 237, 0.3)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -1666,12 +2046,20 @@ body.player-page {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* ====== CATALOG GRID ====== */
@@ -1704,7 +2092,10 @@ body.player-page {
 
 .catalog-grid .poster-wrap {
   /* Poster 16/9 blur làm bg; poster thật 2/3 phủ lên */
-  background-image: var(--card-bg, linear-gradient(135deg, #1a1a24 0%, #0b0b0f 100%));
+  background-image: var(
+    --card-bg,
+    linear-gradient(135deg, #1a1a24 0%, #0b0b0f 100%)
+  );
   background-size: cover;
   background-position: center;
 }
@@ -1714,12 +2105,16 @@ body.player-page {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg,
+    linear-gradient(
+      90deg,
       transparent 0%,
       rgba(255, 255, 255, 0.04) 50%,
-      transparent 100%),
+      transparent 100%
+    ),
     linear-gradient(135deg, #1a1a24 0%, #0b0b0f 100%);
-  background-size: 200% 100%, cover;
+  background-size:
+    200% 100%,
+    cover;
   animation: skeleton-shimmer 1.5s linear infinite;
   z-index: 1;
   transition: opacity 0.3s ease;
@@ -1891,7 +2286,11 @@ footer {
     left: var(--sp-3);
     right: var(--sp-3);
     margin-top: var(--sp-2);
-    background: linear-gradient(180deg, rgba(11, 16, 25, 0.97) 0%, rgba(5, 8, 16, 0.97) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(11, 16, 25, 0.97) 0%,
+      rgba(5, 8, 16, 0.97) 100%
+    );
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border: 1px solid var(--border);
@@ -1904,18 +2303,20 @@ footer {
     transform: translateY(-12px);
     opacity: 0;
     visibility: hidden;
-    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.22s ease,
-                visibility 0s linear 0.28s;
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.22s ease,
+      visibility 0s linear 0.28s;
     overflow: hidden;
   }
   .navbar-custom .navbar-collapse.show {
     transform: translateY(0);
     opacity: 1;
     visibility: visible;
-    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-                opacity 0.22s ease,
-                visibility 0s linear 0s;
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.22s ease,
+      visibility 0s linear 0s;
   }
 
   /* Nút close — ẩn trên dropdown (vì dropdown tự đóng khi click link) */
