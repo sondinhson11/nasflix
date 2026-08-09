@@ -1,49 +1,24 @@
-// NguonC API - nguồn phim vietsub lớn nhất, cập nhật liên tục
 const API_CONFIG = {
-  nguonc: {
-    base: "https://phim.nguonc.com/api",
-    listNew: "/films/phim-moi-cap-nhat",
-    listSeries: "/films/danh-sach/phim-bo",
-    listMovies: "/films/danh-sach/phim-le",
-    listAnime: "/films/danh-sach/hoat-hinh",
-    detail: (slug) => `/film/${slug}`,
-    byCountry: (slug) => `/films/quoc-gia/${slug}`,
-    byGenre: (slug) => `/films/the-loai/${slug}`,
-    byYear: (year) => `/films/nam-phat-hanh/${year}`,
-    search: (keyword) => `/films/search?keyword=${encodeURIComponent(keyword)}`,
-    // CDN ảnh cố định
-    imageBase: "https://phim.nguonc.com",
-  },
-};
-
-// PhimAPI giữ làm fallback khi NguonC lỗi (chỉ dùng cho list/detail khi cần)
-const API_CONFIG_FALLBACK = {
   phimapi: {
-    base: "https://phimapi.com",
-    listNew: "/danh-sach/phim-moi-cap-nhat",
-    listSeries: "/v1/api/danh-sach/phim-bo",
-    listMovies: "/v1/api/danh-sach/phim-le",
-    listAnime: "/v1/api/danh-sach/hoat-hinh",
-    detail: (slug) => `/phim/${slug}`,
+    list: "https://phimapi.com/danh-sach/phim-moi-cap-nhat",
+    detail: "https://phimapi.com/phim/",
+  },
+  ophim: {
+    list: "https://ophim1.com/danh-sach/phim-moi-cap-nhat",
+    detail: "https://ophim1.com/phim/",
   },
 };
 
-const MERGE_SOURCES = ["nguonc"];
+const MERGE_SOURCES = ["phimapi", "ophim"];
 const MOVIE_MAP_KEY = "SFLIX_merged_movies";
-const MOVIE_MAP_VERSION = 1; // bump để vô hiệu hoá cache cũ khi schema đổi
-const MOVIE_MAP_TTL_MS = 60 * 60 * 1000; // 1 giờ — sau đó reload từ API
-const MOVIE_MAP_MAX_ENTRIES = 500; // LRU cap — tránh localStorage phình vô hạn
 const SOURCE_LABELS = {
-  nguonc: "NguonC",
   phimapi: "PhimAPI",
+  ophim: "OPhim",
 };
 
 let currentPage = 1;
 let isFetching = false;
-// Registry để destroy swiper cũ trước khi tạo mới (tránh memory leak)
-const swiperInstances = {};
-// Track xem section country nào đang fetch để tránh duplicate request
-const countryFetchState = {};
+let swiperInstance = null;
 
 window.addEventListener("scroll", () => {
   const nav = document.getElementById("navbar");
@@ -52,54 +27,6 @@ window.addEventListener("scroll", () => {
     else nav.classList.remove("scrolled");
   }
 });
-
-/* === MOBILE DROPDOWN NAV === */
-(function initMobileMenu() {
-  const navMenu = document.getElementById("navMenu");
-  const navbar = document.getElementById("navbar");
-  const toggler = document.querySelector(".navbar-toggler[data-bs-target='#navMenu']");
-  if (!navMenu || !navbar || !toggler) return;
-
-  // Helper: đồng bộ class .show với Bootstrap collapse & body.nav-open
-  const sync = (open) => {
-    if (open) {
-      navMenu.classList.add("show");
-      document.body.classList.add("nav-open");
-    } else {
-      navMenu.classList.remove("show");
-      document.body.classList.remove("nav-open");
-    }
-  };
-
-  // Bootstrap toggle — bắt sự kiện đóng/mở collapse
-  navMenu.addEventListener("show.bs.collapse", () => sync(true));
-  navMenu.addEventListener("hide.bs.collapse", () => sync(false));
-
-  // Click vào link → đóng dropdown (auto-navigate)
-  navMenu.querySelectorAll(".nav-link").forEach((a) => {
-    a.addEventListener("click", () => {
-      navMenu.classList.remove("show");
-      document.body.classList.remove("nav-open");
-    });
-  });
-
-  // Click vào backdrop / ngoài navbar → đóng dropdown
-  document.addEventListener("click", (e) => {
-    if (!document.body.classList.contains("nav-open")) return;
-    if (!navbar.contains(e.target)) {
-      navMenu.classList.remove("show");
-      document.body.classList.remove("nav-open");
-    }
-  });
-
-  // Phím Escape đóng dropdown
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && document.body.classList.contains("nav-open")) {
-      navMenu.classList.remove("show");
-      document.body.classList.remove("nav-open");
-    }
-  });
-})();
 
 const DEFAULT_OG_IMAGE = "assets/images/og-image.svg";
 const SITE_NAME = "SFLIX";
@@ -163,92 +90,58 @@ function setMetaTags({
 }
 
 function saveMergedMoviesMap(map) {
-  try {
-    // LRU evict nếu vượt quá cap. Entry truy cập gần nhất nằm cuối object
-    // → giữ lại MOVIE_MAP_MAX_ENTRIES entry cuối (mới nhất).
-    const entries = Object.entries(map);
-    let trimmed = map;
-    if (entries.length > MOVIE_MAP_MAX_ENTRIES) {
-      trimmed = Object.fromEntries(entries.slice(-MOVIE_MAP_MAX_ENTRIES));
-    }
-    const payload = {
-      v: MOVIE_MAP_VERSION,
-      t: Date.now(),
-      map: trimmed,
-    };
-    localStorage.setItem(MOVIE_MAP_KEY, JSON.stringify(payload));
-  } catch (e) {
-    // localStorage full / disabled → bỏ qua, không crash
-  }
+  localStorage.setItem(MOVIE_MAP_KEY, JSON.stringify(map));
 }
 
 function getMergedMoviesMap() {
   try {
-    const raw = localStorage.getItem(MOVIE_MAP_KEY);
-    if (!raw) return {};
-    const payload = JSON.parse(raw);
-    // Bỏ cache nếu version khác hoặc đã quá TTL
-    if (!payload || payload.v !== MOVIE_MAP_VERSION) return {};
-    if (typeof payload.t !== "number" || Date.now() - payload.t > MOVIE_MAP_TTL_MS) {
-      return {};
-    }
-    return payload.map || {};
+    return JSON.parse(localStorage.getItem(MOVIE_MAP_KEY)) || {};
   } catch {
     return {};
   }
 }
 
 function normalizeData(source, data) {
-  const items = data.items || data.data?.items || [];
+  const items = data.items || [];
+  const ophimBase   = "https://img.ophim.live/uploads/movies/";
+  // Lấy CDN domain từ response API (phimapi v1 trả APP_DOMAIN_CDN_IMAGE)
+  const cdnFromApi  = data.APP_DOMAIN_CDN_IMAGE || "";
+  const phimapiBase = cdnFromApi || data.pathImage || "https://phimimg.com";
+
+  function fixUrl(raw) {
+    if (!raw || raw === "null" || raw === "undefined") return "";
+    if (raw.startsWith("http")) return raw;
+    const base = source === "ophim" ? ophimBase : phimapiBase;
+    if (!base) return "";
+    // Tránh double slash
+    return base.replace(/\/$/, "") + "/" + raw.replace(/^\//, "");
+  }
 
   return items.map((item) => {
-    // NguonC trả URL ảnh đầy đủ (https://phim.nguonc.com/...) — không cần build
-    const thumb  = item.thumb_url || "";
-    const poster = item.poster_url || item.thumb_url || "";
+    let thumb = fixUrl(item.thumb_url);
+    let poster = fixUrl(item.poster_url);
 
-    // NguonC không trả type — phải suy ra từ total_episodes hoặc category từ detail
+    // Một số endpoint (vd /phim-moi-cap-nhat) không trả về `type`,
+    // nhưng có `tmdb.type` = "tv" (series) hoặc "movie" (single).
+    const tmdbType = item.tmdb?.type || "";
     let inferredType = item.type || "";
     if (!inferredType) {
-      const totalEp = parseInt(item.total_episodes, 10);
-      if (totalEp > 1) inferredType = "series";
-      else inferredType = "single";
-    }
-
-    // Suy ra số tập hiện tại từ current_episode (vd "Tập 10", "Hoàn tất (12/12)")
-    let episodeCurrent = "";
-    const cur = item.current_episode || "";
-    const match = cur.match(/(\d+)/);
-    if (match) {
-      const curEp = parseInt(match[1], 10);
-      const totalEp = parseInt(item.total_episodes, 10);
-      episodeCurrent = totalEp > 0 ? `${curEp}/${totalEp}` : `Tập ${curEp}`;
-    } else if (cur) {
-      episodeCurrent = cur;
+      if (tmdbType === "tv") inferredType = "series";
+      else if (tmdbType === "movie") inferredType = "single";
     }
 
     return {
       source,
       name: item.name,
       slug: item.slug,
-      year: parseInt(item.year, 10) || new Date().getFullYear(),
+      year: item.year || new Date().getFullYear(),
       type: inferredType,
       time: item.time || "",
-      episode_current: episodeCurrent,
+      episode_current: item.episode_current || "",
       thumb,
-      poster,
-      modifiedTime: item.modified || item.created || "",
+      poster: poster || thumb,
     };
   });
-}
-
-// Parse chuỗi thời gian kiểu "2024-08-15 10:30:00" hoặc ISO về timestamp.
-// Trả về 0 nếu không parse được — đẩy về cuối danh sách.
-function parseModifiedTime(str) {
-  if (!str) return 0;
-  // thay space bằng "T" để trình duyệt hiểu là local datetime
-  const normalized = String(str).trim().replace(" ", "T");
-  const t = Date.parse(normalized);
-  return Number.isFinite(t) ? t : 0;
 }
 
 function createMovieKey(movie) {
@@ -274,19 +167,8 @@ function formatMovieMeta(movie) {
 }
 
 async function fetchSourceList(source, page) {
-  // NguonC dùng base + endpoint
-  if (source === "nguonc") {
-    const cfg = API_CONFIG.nguonc;
-    const res = await axios.get(cfg.base + cfg.listNew, {
-      params: { page },
-    });
-    return normalizeData("nguonc", res.data);
-  }
-  // Fallback (nếu cần)
-  const cfg = API_CONFIG_FALLBACK[source];
-  if (!cfg) throw new Error(`Unknown source: ${source}`);
-  const res = await axios.get(cfg.base + cfg.listNew, { params: { page } });
-  return normalizeData(source, res.data);
+  const response = await axios.get(`${API_CONFIG[source].list}?page=${page}`);
+  return normalizeData(source, response.data);
 }
 
 async function fetchAndMergeMovies(page) {
@@ -313,7 +195,6 @@ async function fetchAndMergeMovies(page) {
         episode_current: movie.episode_current,
         thumb: movie.thumb,
         poster: movie.poster,
-        modifiedTime: movie.modifiedTime || "",
         sources: [{ source: movie.source, slug: movie.slug }],
       };
     } else {
@@ -324,10 +205,6 @@ async function fetchAndMergeMovies(page) {
       if (!merged[key].time && movie.time) merged[key].time = movie.time;
       if (!merged[key].episode_current && movie.episode_current)
         merged[key].episode_current = movie.episode_current;
-      // Lấy thời gian cập nhật mới nhất trong mọi nguồn
-      const newTs = parseModifiedTime(movie.modifiedTime);
-      const oldTs = parseModifiedTime(merged[key].modifiedTime);
-      if (newTs > oldTs) merged[key].modifiedTime = movie.modifiedTime;
       const exists = merged[key].sources.some(
         (item) => item.source === movie.source && item.slug === movie.slug,
       );
@@ -338,16 +215,7 @@ async function fetchAndMergeMovies(page) {
   });
 
   saveMergedMoviesMap(merged);
-
-  // Sắp xếp theo modified.time mới nhất trước, có fallback về năm
-  const list = Object.entries(merged).map(([key, movie]) => ({ key, ...movie }));
-  list.sort((a, b) => {
-    const ta = parseModifiedTime(a.modifiedTime);
-    const tb = parseModifiedTime(b.modifiedTime);
-    if (tb !== ta) return tb - ta;
-    return (b.year || 0) - (a.year || 0);
-  });
-  return list;
+  return Object.entries(merged).map(([key, movie]) => ({ key, ...movie }));
 }
 
 function goToDetail(movieKey) {
@@ -378,140 +246,90 @@ async function fetchHomeMovies(page = 1) {
   isFetching = true;
 
   const newUpdatedSlider = document.getElementById("movieGrid");
+  const trendingSlider   = document.getElementById("trendingSlider");
 
-  if (!newUpdatedSlider) return;
+  if (!newUpdatedSlider || !trendingSlider) return;
 
-  // Skeleton cho slider
+  // Skeleton cho cả 2 slider
   const skeletonSlides = Array(10)
     .fill('<div class="swiper-slide"><div class="skeleton skeleton-card"></div></div>')
     .join("");
   newUpdatedSlider.innerHTML = skeletonSlides;
 
   try {
-    const [movies, rawList] = await Promise.all([
-      fetchAndMergeMovies(page),
-      fetchSourceList("nguonc", page),
-    ]);
+    const movies = await fetchAndMergeMovies(page);
 
+    trendingSlider.innerHTML = "";
     newUpdatedSlider.innerHTML = "";
 
     const BLANK_IMG = "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 2 3%22><rect width=%222%22 height=%223%22 fill=%22%23222%22/></svg>";
 
-    // Enrich slider items: gắn `key` để card link đúng detail
-    // Giữ nguyên thứ tự từ API (modified.time DESC).
-    // `recentMap` dùng để truy sources, fallback nếu phim không có trong merged.
-    const recentMap = {};
-    movies.forEach((m) => { if (m.key) recentMap[m.key] = m; });
-    const recent = rawList.slice(0, 20).map((item) => {
-      const key = createMovieKey(item);
-      const enriched = recentMap[key];
-      return enriched
-        ? { ...item, ...enriched }
-        : { ...item, key, sources: [{ source: "nguonc", slug: item.slug }] };
-    });
-    const hero = movies[0];
+    // Tối đa 20 phim, index 0 dùng cho Hero Banner
+    const limited = movies.slice(0, 20);
 
-    const renderCard = (movie) => {
+    limited.forEach((movie, index) => {
+      // Hero Banner — lấy phim đầu tiên
+      if (index === 0) {
+        document.getElementById("heroBanner").style.backgroundImage =
+          `url('${movie.poster}')`;
+        document.getElementById("heroTitle").innerText = movie.name;
+        document.getElementById("heroMeta").innerHTML =
+          `<span class="text-white border px-1 me-2">S</span> Series Mới Cập Nhật • ${movie.year}`;
+
+        setMetaTags({
+          title: `${movie.name} (${movie.year}) - SFLIX`,
+          description: `Xem ${movie.name} (${movie.year}) vietsub chất lượng cao trên SFLIX.`,
+          image: movie.poster,
+        });
+
+        const playBtn  = document.getElementById("heroPlayBtn");
+        const detailBtn = document.getElementById("heroDetailBtn");
+        playBtn.style.display  = "inline-block";
+        detailBtn.style.display = "inline-block";
+        playBtn.onclick  = () => goToDetail(movie.key);
+        detailBtn.onclick = () => goToDetail(movie.key);
+
+        if (movie.sources.length > 0) {
+          fetchDescriptionForHero(movie.sources[0].source, movie.sources[0].slug);
+        }
+      }
+
       const meta     = formatMovieMeta(movie);
       const safeName = (movie.name || "").replace(/"/g, "&quot;");
-      // Ưu tiên thumb (2/3 dọc) cho slider/card; poster (16/9 ngang) chỉ dùng cho Hero Banner
-      const posterSrc = movie.thumb || movie.poster || "";
-      const backdrop  = movie.poster || movie.thumb || "";
-      return `
-        <a href="detail.html?movieKey=${encodeURIComponent(movie.key)}" class="movie-card">
-          <div class="poster-wrap" style="--card-bg:url('${backdrop.replace(/'/g, "\\'")}')">
-            <div class="poster-skeleton"></div>
-            <img src="${posterSrc || BLANK_IMG}" alt="${safeName}" loading="lazy"
-                 referrerpolicy="no-referrer"
-                 onload="this.parentElement.querySelector('.poster-skeleton')?.classList.add('hidden');this.classList.add('loaded');"
-                 onerror="this.onerror=null;this.src='${BLANK_IMG}';this.parentElement.querySelector('.poster-skeleton')?.classList.add('hidden');this.classList.add('loaded');">
-            <div class="poster-overlay">
-              <div class="play-badge"><i class="fa-solid fa-play"></i></div>
-            </div>
-          </div>
+      const thumbSrc = movie.thumb || movie.poster || "";
+      const cardHTML = `
+        <a href="detail.html?movieKey=${encodeURIComponent(movie.key)}" class="movie-card position-relative">
+          <img src="${thumbSrc || BLANK_IMG}" alt="${safeName}" loading="lazy"
+               onerror="this.onerror=null;this.src='${BLANK_IMG}';">
           <div class="movie-info">
             <div class="movie-title">${safeName}</div>
             <div class="movie-meta-card">${meta}</div>
           </div>
         </a>`;
-    };
 
-    // ---- Hero Banner ----
-    if (hero) {
-      // Ưu tiên poster (thường là ảnh dọc, đẹp hơn thumb ngang),
-      // nhưng pseudo ::before có sẵn blur + scale nên sẽ tự fill hero
-      const heroBg = hero.poster || hero.thumb || "";
-      if (heroBg) {
-        document.getElementById("heroBanner").style.setProperty(
-          "--hero-bg",
-          `url('${heroBg}')`
-        );
-      }
-      document.getElementById("heroTitle").innerText = hero.name;
-      const heroTypeLabel =
-        (hero.type === "single" || hero.type === "movie")
-          ? "Phim Lẻ"
-          : "Series Mới Cập Nhật";
+      const slide = `<div class="swiper-slide">${cardHTML}</div>`;
 
-      // Hero badge
-      const heroBadge = document.getElementById("heroBadge");
-      const heroBadgeText = document.getElementById("heroBadgeText");
-      if (heroBadge && heroBadgeText) {
-        heroBadge.style.display = "inline-flex";
-        heroBadgeText.innerText = heroTypeLabel;
-      }
+      // 10 phim đầu → Thịnh Hành, 10 phim tiếp → Mới Cập Nhật
+      if (index < 10) trendingSlider.innerHTML   += slide;
+      else            newUpdatedSlider.innerHTML += slide;
+    });
 
-      // Hero meta với pill style
-      const metaYear = hero.year || "";
-      const metaEp = formatMovieMeta(hero);
-      document.getElementById("heroMeta").innerHTML = `
-        <span class="match"><i class="fa-solid fa-circle-check"></i> 98% Phù hợp</span>
-        <span class="meta-pill">${metaYear}</span>
-        <span class="meta-pill meta-hd">HD</span>
-        <span class="meta-pill">${metaEp}</span>
-      `;
-
-      setMetaTags({
-        title: `${hero.name} (${hero.year}) - SFLIX`,
-        description: `Xem ${hero.name} (${hero.year}) vietsub chất lượng cao trên SFLIX.`,
-        image: hero.poster || hero.thumb,
-      });
-
-      const playBtn   = document.getElementById("heroPlayBtn");
-      const detailBtn = document.getElementById("heroDetailBtn");
-      playBtn.style.display   = "inline-flex";
-      detailBtn.style.display = "inline-flex";
-      playBtn.onclick   = () => goToDetail(hero.key);
-      detailBtn.onclick = () => goToDetail(hero.key);
-
-      if (hero.sources.length > 0) {
-        fetchDescriptionForHero(hero.sources[0].source, hero.sources[0].slug);
-      }
-    }
-
-    // ---- Mới Cập Nhật ----
-    if (recent.length) {
-      newUpdatedSlider.innerHTML = recent
-        .map((movie) => `<div class="swiper-slide">${renderCard(movie)}</div>`)
-        .join("");
-    }
-
-    // Khởi tạo swiper (destroy instance cũ để tránh memory leak)
+    // Khởi tạo / refresh cả 2 swiper
     if (window.Swiper) {
-      if (swiperInstances["mySwiper"]) swiperInstances["mySwiper"].destroy(true, true);
+      if (swiperInstance) swiperInstance.destroy(true, true);
       const swiperConfig = {
         slidesPerView: 2,
-        spaceBetween: 12,
+        spaceBetween: 10,
         breakpoints: {
-          576: { slidesPerView: 3, spaceBetween: 16 },
-          768: { slidesPerView: 4, spaceBetween: 16 },
-          992: { slidesPerView: 5, spaceBetween: 20 },
-          1200: { slidesPerView: 6, spaceBetween: 20 },
+          576: { slidesPerView: 3, spaceBetween: 15 },
+          768: { slidesPerView: 4, spaceBetween: 15 },
+          992: { slidesPerView: 5, spaceBetween: 15 },
+          1200: { slidesPerView: 6, spaceBetween: 15 },
         },
         freeMode: true,
-        grabCursor: true,
       };
-      swiperInstances["mySwiper"] = new Swiper(".mySwiper", swiperConfig);
+      swiperInstance = new Swiper(".mySwiper",  swiperConfig);
+      new Swiper(".mySwiper2", swiperConfig);
     }
   } catch (error) {
     console.error(error);
@@ -521,52 +339,34 @@ async function fetchHomeMovies(page = 1) {
 }
 
 async function fetchSourceDetail(source, slug) {
-  if (source === "nguonc") {
-    const cfg = API_CONFIG.nguonc;
-    const res = await axios.get(cfg.base + cfg.detail(slug));
-    if (res.data?.status !== "success" || !res.data.movie) {
-      throw new Error("NguonC: invalid response");
-    }
-    const movieData = res.data.movie;
-    // NguonC: episodes là array of {server_name, items: [{name, slug, embed}]}
-    const servers = movieData.episodes || [];
-    const episodes = [];
-    servers.forEach((server) => {
-      (server.items || []).forEach((item) => {
-        episodes.push({
-          name: item.name,
-          slug: item.slug,
-          embed: item.embed,
-          filename: item.filename || "",
-          server: server.server_name,
-        });
-      });
-    });
+  const response = await axios.get(`${API_CONFIG[source].detail}${slug}`);
+  const movieData = response.data.movie;
+  const ophimBase = "https://img.ophim.live/uploads/movies/";
+  const cdnFromApi = response.data.APP_DOMAIN_CDN_IMAGE || "";
+  const domainImg =
+    source === "ophim"
+      ? ophimBase
+      : cdnFromApi || response.data.pathImage || "https://phimimg.com";
 
-    return {
-      source,
-      slug,
-      movieData,
-      episodes,
-      servers,
-      thumb: movieData.thumb_url || "",
-      poster: movieData.poster_url || movieData.thumb_url || "",
-    };
+  function fixUrl(raw) {
+    if (!raw || raw === "null" || raw === "undefined") return "";
+    if (raw.startsWith("http")) return raw;
+    if (!domainImg) return "";
+    return domainImg.replace(/\/$/, "") + "/" + raw.replace(/^\//, "");
   }
 
-  // Fallback
-  const cfg = API_CONFIG_FALLBACK[source];
-  if (!cfg) throw new Error(`Unknown source: ${source}`);
-  const response = await axios.get(cfg.base + cfg.detail(slug));
-  const movieData = response.data.movie;
+  const thumb = fixUrl(movieData.thumb_url);
+  const poster = fixUrl(movieData.poster_url);
+
   const episodes = response.data.episodes?.[0]?.server_data || [];
+
   return {
     source,
     slug,
     movieData,
     episodes,
-    thumb: movieData.thumb_url || "",
-    poster: movieData.poster_url || movieData.thumb_url || "",
+    thumb,
+    poster: poster || thumb,
   };
 }
 
@@ -606,25 +406,23 @@ async function renderMovieDetail(detail) {
 
   document.getElementById("detailTitle").innerText = movieData.name;
   document.getElementById("detailOriginName").innerText =
-    movieData.original_name || movieData.origin_name || "";
+    movieData.origin_name || "";
   document.getElementById("detailYear").innerText = movieData.year || "N/A";
   document.getElementById("detailContent").innerHTML =
-    movieData.description || movieData.content || "Đang cập nhật...";
-  document.getElementById("detailPoster").src = detail.poster || detail.thumb;
+    movieData.content || "Đang cập nhật...";
+  document.getElementById("detailPoster").src = detail.thumb;
   document.getElementById("detailBackdrop").style.backgroundImage =
-    `url('${detail.poster || detail.thumb}')`;
+    `url('${detail.poster}')`;
 
-  const cleanContent = (movieData.description || movieData.content || "")
+  const cleanContent = (movieData.content || "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 200);
   const descParts = [];
-  if (movieData.original_name || movieData.origin_name) descParts.push(movieData.original_name || movieData.origin_name);
+  if (movieData.origin_name) descParts.push(movieData.origin_name);
   if (movieData.year) descParts.push(`(${movieData.year})`);
-  if (movieData.current_episode || movieData.episode_current) {
-    descParts.push(`· ${movieData.current_episode || movieData.episode_current}`);
-  }
+  if (movieData.episode_current) descParts.push(`· ${movieData.episode_current}`);
   if (cleanContent) descParts.push(`· ${cleanContent}…`);
   setMetaTags({
     title: movieData.name,
@@ -636,109 +434,58 @@ async function renderMovieDetail(detail) {
   epListContainer.innerHTML = "";
   if (epListPlayerContainer) epListPlayerContainer.innerHTML = "";
 
-  renderEpisodeLists(detail.episodes, {
-    detailContainer: epListContainer,
-    playerContainer: epListPlayerContainer,
-    source: detail.source,
-    slug: detail.slug,
-    onPlay: (ep) => {
-      // Cập nhật URL query để có thể share / refresh vẫn giữ tập
-      const url = new URL(window.location.href);
-      url.searchParams.set("source", detail.source);
-      url.searchParams.set("slug", detail.slug);
-      url.searchParams.set("ep", ep.slug || ep.name || "");
-      window.history.replaceState({}, "", url.toString());
-    },
-  });
-
-  // Nút "Xem ngay" → mở player.html với tập đầu tiên (hoặc tập đang active)
-  const watchBtn = document.getElementById("watchNowBtn");
-  if (watchBtn) {
-    watchBtn.onclick = () => {
-      const firstBtn =
-        epListContainer.querySelector(".ep-btn") ||
-        epListPlayerContainer?.querySelector(".ep-btn");
-      if (firstBtn) {
-        firstBtn.click();
-      } else if (detail.episodes.length > 0) {
-        const firstEp = detail.episodes[0];
-        playVideo(
-          firstEp.embed || firstEp.link_embed || firstEp.url || firstEp.file,
-          `Tập ${firstEp.name || firstEp.episode}`,
-          { source: detail.source, slug: detail.slug, ep: firstEp },
-        );
-      }
-    };
-  }
-}
-
-/**
- * Render danh sách tập vào 2 container (detail + player sidebar) một cách đồng bộ.
- * Mỗi episode được gán data-ep-key duy nhất; click ở container nào thì
- * container kia cũng active theo cùng key → không bao giờ lệch.
- */
-function renderEpisodeLists(episodes, opts) {
-  const { detailContainer, playerContainer, onPlay } = opts || {};
-  if (!detailContainer) return;
-
-  // Chuẩn bị key duy nhất cho từng episode để đồng bộ 2 danh sách
-  const normalized = episodes.map((ep, idx) => {
-    const key = ep.slug || `${ep.name || ep.episode || "tap"}-${idx}`;
-    return { ep, key };
-  });
-
-  const buildBtn = (epObj, { compact }) => {
-    const btn = document.createElement("button");
-    btn.className = "ep-btn" + (compact ? "" : " m-1");
-    btn.type = "button";
-    btn.dataset.epKey = epObj.key;
-    btn.innerText = epObj.ep.name || epObj.ep.episode || "Tập";
-    btn.addEventListener("click", () => {
-      // Đồng bộ active theo key ở cả 2 danh sách
-      document
-        .querySelectorAll(".ep-btn[data-ep-key]")
-        .forEach((b) => b.classList.remove("active"));
-      document
-        .querySelectorAll(`.ep-btn[data-ep-key="${cssEscape(epObj.key)}"]`)
-        .forEach((b) => b.classList.add("active"));
-      if (typeof onPlay === "function") onPlay(epObj.ep);
-      // Truyền slug + source + ep để playVideo chuyển sang player.html
-      playVideo(
-        epObj.ep.embed || epObj.ep.link_embed || epObj.ep.url || epObj.ep.file,
-        `Tập ${epObj.ep.name || epObj.ep.episode}`,
-        {
-          source: opts.source,
-          slug: opts.slug,
-          ep: epObj.ep,
-        },
-      );
-    });
-    return btn;
-  };
-
-  detailContainer.innerHTML = "";
-  if (playerContainer) playerContainer.innerHTML = "";
-
-  if (!normalized.length) {
-    detailContainer.innerHTML =
+  if (!detail.episodes.length) {
+    epListContainer.innerHTML =
       '<span class="text-muted">Không có tập/phim trong nguồn này.</span>';
     return;
   }
 
-  normalized.forEach((epObj) => {
-    detailContainer.appendChild(buildBtn(epObj, { compact: false }));
-    if (playerContainer) {
-      playerContainer.appendChild(buildBtn(epObj, { compact: true }));
+  detail.episodes.forEach((ep) => {
+    const btn = document.createElement("button");
+    btn.className = "ep-btn m-1";
+    btn.innerText = ep.name || ep.episode || "Tập";
+    btn.onclick = () => {
+      document
+        .querySelectorAll(".ep-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Update player view buttons
+      document
+        .querySelectorAll("#episodeListPlayer .ep-btn")
+        .forEach((b) => b.classList.remove("active"));
+
+      playVideo(
+        ep.embed || ep.link_embed || ep.url || ep.file,
+        `Tập ${ep.name || ep.episode}`,
+      );
+    };
+    epListContainer.appendChild(btn);
+
+    // Create button for player view
+    if (epListPlayerContainer) {
+      const btnPlayer = document.createElement("button");
+      btnPlayer.className = "ep-btn";
+      btnPlayer.innerText = ep.name || ep.episode || "Tập";
+      btnPlayer.onclick = () => {
+        document
+          .querySelectorAll(".ep-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btnPlayer.classList.add("active");
+
+        // Update detail view buttons
+        document
+          .querySelectorAll("#episodeList .ep-btn")
+          .forEach((b) => b.classList.remove("active"));
+
+        playVideo(
+          ep.embed || ep.link_embed || ep.url || ep.file,
+          `Tập ${ep.name || ep.episode}`,
+        );
+      };
+      epListPlayerContainer.appendChild(btnPlayer);
     }
   });
-}
-
-// Escape an toàn cho giá trị trong CSS selector
-function cssEscape(value) {
-  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
-    return CSS.escape(value);
-  }
-  return String(value).replace(/[^a-zA-Z0-9_\-]/g, (c) => `\\${c}`);
 }
 
 async function loadMovieDetailBySlug(slug) {
@@ -774,7 +521,6 @@ async function loadMovieDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const movieKey = urlParams.get("movieKey");
   const slug = urlParams.get("slug");
-  const initialEp = urlParams.get("ep");
   const epListContainer = document.getElementById("episodeList");
 
   try {
@@ -787,14 +533,12 @@ async function loadMovieDetail() {
           movieEntry.sources[0].source,
           movieEntry.sources[0].slug,
         );
-        activateEpisodeFromQuery(initialEp);
         return;
       }
     }
 
     if (slug) {
       await loadMovieDetailBySlug(slug);
-      activateEpisodeFromQuery(initialEp);
     }
   } catch (error) {
     if (epListContainer) {
@@ -805,121 +549,48 @@ async function loadMovieDetail() {
   }
 }
 
-// Click tập ứng với ?ep=... nếu có (key khớp)
-function activateEpisodeFromQuery(epKey) {
-  if (!epKey) return;
-  // Đợi DOM render xong danh sách tập
-  requestAnimationFrame(() => {
-    const btn = document.querySelector(
-      `.ep-btn[data-ep-key="${cssEscape(epKey)}"]`,
-    );
-    if (btn) btn.click();
-  });
-}
+function playVideo(url, epName) {
+  document.getElementById("videoPlayer").src = url;
+  document.getElementById("playerTitleNav").innerText =
+    document.getElementById("detailTitle").innerText + " - " + epName;
 
-function playVideo(url, epName, opts = {}) {
-  // Mặc định: chuyển sang trang player.html riêng (mở như trang mới, không phải modal)
-  // Nếu muốn dùng modal cũ, truyền { inline: true } khi gọi
-  if (!opts.inline) {
-    const params = new URLSearchParams(window.location.search);
-    const source = opts.source || params.get("source") || "nguonc";
-    const ep = opts.ep || "";
-    const slug = opts.slug || params.get("slug") || "";
-    const movieKey = params.get("movieKey") || "";
-
-    // Lưu tạm vào sessionStorage để player.html biết đường quay lại
-    try {
-      sessionStorage.setItem(
-        "SFLIX_player_back",
-        JSON.stringify({
-          movieKey,
-          slug,
-          source,
-        }),
-      );
-    } catch (e) {
-      /* ignore */
-    }
-
-    const qs = new URLSearchParams({
-      source,
-      slug,
-      ep: ep.slug || ep.name || ep,
-    });
-    if (movieKey) qs.set("movieKey", movieKey);
-
-    window.location.href = `player.html?${qs.toString()}`;
-    return;
-  }
-
-  // Fallback: dùng modal cũ (nếu trang nào đó vẫn còn view-player)
-  const player = document.getElementById("videoPlayer");
-  if (player) player.src = url;
-  const nav = document.getElementById("playerTitleNav");
-  if (nav)
-    nav.innerText =
-      (document.getElementById("detailTitle")?.innerText || "") +
-      " - " +
-      epName;
-  const viewDetail = document.getElementById("view-detail");
-  const viewPlayer = document.getElementById("view-player");
-  if (viewDetail) viewDetail.style.display = "none";
-  if (viewPlayer) viewPlayer.style.display = "block";
+  document.getElementById("view-detail").style.display = "none";
+  document.getElementById("view-player").style.display = "block";
   window.scrollTo(0, 0);
 }
 
-// (Đã bỏ switchToDetail — player giờ là trang riêng)
+function switchToDetail() {
+  document.getElementById("view-player").style.display = "none";
+  document.getElementById("view-detail").style.display = "block";
+  document.getElementById("videoPlayer").src = "";
+  window.scrollTo(0, 0);
+}
 
 // ============================================================
 //  COUNTRY SECTIONS — fetch & render slider theo quốc gia
 // ============================================================
 
+const COUNTRY_SWIPER_MAP = {}; // lưu instance swiper để tránh duplicate
+
 async function fetchCountrySection(countrySlug, sliderId, swiperId) {
-  // Guard: tránh duplicate request khi user refresh/click nhanh
-  if (countryFetchState[countrySlug] === "loading") return;
-  countryFetchState[countrySlug] = "loading";
-
   const sliderEl = document.getElementById(sliderId);
-  if (!sliderEl) {
-    countryFetchState[countrySlug] = "idle";
-    return;
-  }
-
-  // Skeleton trong khi chờ API
-  sliderEl.innerHTML = Array(8)
-    .fill('<div class="swiper-slide"><div class="skeleton skeleton-card"></div></div>')
-    .join("");
+  if (!sliderEl) return;
 
   try {
-    const cfg = API_CONFIG.nguonc;
-    const res = await axios.get(cfg.base + cfg.byCountry(countrySlug), {
-      params: { page: 1 },
-    });
-    const raw = res.data?.items || [];
+    const res = await axios.get(
+      `https://phimapi.com/v1/api/quoc-gia/${countrySlug}`,
+      { params: { page: 1, limit: 20 } }
+    );
 
-    // Chuẩn hoá sang format chung (poster_url, episode_current...)
-    const items = raw.map((it) => {
-      const totalEp = parseInt(it.total_episodes, 10) || 0;
-      let epCur = "";
-      const cur = it.current_episode || "";
-      const m = cur.match(/(\d+)/);
-      if (m) {
-        const curNum = parseInt(m[1], 10);
-        epCur = totalEp > 0 ? `${curNum}/${totalEp}` : `Tập ${curNum}`;
-      } else if (cur) {
-        epCur = cur;
-      }
-      return {
-        name: it.name,
-        slug: it.slug,
-        year: parseInt(it.year, 10) || new Date().getFullYear(),
-        type: totalEp > 1 ? "series" : "single",
-        time: it.time || "",
-        episode_current: epCur,
-        poster_url: it.poster_url || "",
-        thumb_url: it.thumb_url || "",
-        modified: it.modified || "",
-      };
+    const raw  = res.data?.data?.items || [];
+    // CDN ảnh đúng từ API trả về
+    const cdn  = res.data?.data?.APP_DOMAIN_CDN_IMAGE || "https://phimimg.com";
+
+    // Sắp xếp theo modified.time mới nhất trước
+    const items = raw.slice().sort((a, b) => {
+      const ta = a.modified?.time ? new Date(a.modified.time).getTime() : 0;
+      const tb = b.modified?.time ? new Date(b.modified.time).getTime() : 0;
+      return tb - ta;
     });
 
     if (!items.length) {
@@ -931,86 +602,29 @@ async function fetchCountrySection(countrySlug, sliderId, swiperId) {
     const BLANK_IMG =
       "data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 2 3%22><rect width=%222%22 height=%223%22 fill=%22%23222%22/></svg>";
 
-    // Đọc cache TRƯỚC khi sort: country endpoint không trả `modified`,
-    // nhưng có thể phim đã từng xuất hiện trong listNew → merged cache có modifiedTime.
-    // Ưu tiên sort theo modifiedTime, fallback year DESC.
-    const merged = getMergedMoviesMap();
-
-    items.sort((a, b) => {
-      const keyA = `${(a.name || "").trim().toLowerCase()}|${a.year || ""}`;
-      const keyB = `${(b.name || "").trim().toLowerCase()}|${b.year || ""}`;
-      const ta = parseModifiedTime(merged[keyA]?.modifiedTime) || parseModifiedTime(a.modified);
-      const tb = parseModifiedTime(merged[keyB]?.modifiedTime) || parseModifiedTime(b.modified);
-      if (tb !== ta) return tb - ta;
-      return (b.year || 0) - (a.year || 0);
-    });
-
-    // Gộp các phim của country vào merged map để khi user click vào xem
-    // detail thì loadMovieDetail tìm được entry → có danh sách sources
-    items.forEach((item) => {
-      const key = `${(item.name || "").trim().toLowerCase()}|${item.year || ""}`;
-      const mtime = item.modified || "";
-      const existing = merged[key];
-      if (!existing) {
-        merged[key] = {
-          name: item.name,
-          year: item.year,
-          type: item.type,
-          time: item.time || "",
-          episode_current: item.episode_current || "",
-          thumb: item.thumb_url || "",
-          poster: item.poster_url || item.thumb_url || "",
-          modifiedTime: mtime,
-          sources: [{ source: "nguonc", slug: item.slug }],
-        };
-      } else {
-        if (!existing.poster && item.poster_url) existing.poster = item.poster_url;
-        if (!existing.thumb && item.thumb_url) existing.thumb = item.thumb_url;
-        const newTs = parseModifiedTime(mtime);
-        const oldTs = parseModifiedTime(existing.modifiedTime);
-        if (newTs > oldTs) existing.modifiedTime = mtime;
-        const hasSource = existing.sources.some(
-          (s) => s.source === "nguonc" && s.slug === item.slug,
-        );
-        if (!hasSource) {
-          existing.sources.push({ source: "nguonc", slug: item.slug });
-        }
-      }
-    });
-    saveMergedMoviesMap(merged);
-
     sliderEl.innerHTML = items
       .map((item) => {
-        // NguonC: thumb = 2/3 (poster thật), poster = 16/9 (backdrop)
-        // Card grid 2/3 cần dùng thumb_url; poster dùng làm background blur
-        const thumb  = item.thumb_url || "";
-        const poster = item.poster_url || "";
+        // Chuẩn hoá URL ảnh dùng CDN lấy từ API
+        let thumb = item.thumb_url || item.poster_url || "";
+        if (thumb === "null" || thumb === "undefined") thumb = "";
+        if (thumb && !thumb.startsWith("http")) {
+          thumb = cdn + "/" + thumb;
+        }
 
         const key = `${(item.name || "").trim().toLowerCase()}|${item.year || ""}`;
         const href = `detail.html?movieKey=${encodeURIComponent(key)}&slug=${encodeURIComponent(item.slug || "")}`;
         const safeName = (item.name || "").replace(/"/g, "&quot;");
         const ep = item.episode_current || item.time || (item.year ? String(item.year) : "");
-        const posterStyle = poster
-          ? `style="--card-bg:url('${poster.replace(/'/g, "\\'")}')"`
-          : "";
 
         return `
           <div class="swiper-slide">
-            <a href="${href}" class="movie-card">
-              <div class="poster-wrap" ${posterStyle}>
-                <div class="poster-skeleton"></div>
-                <img
-                  src="${thumb || BLANK_IMG}"
-                  alt="${safeName}"
-                  loading="lazy"
-                  referrerpolicy="no-referrer"
-                  onload="this.parentElement.querySelector('.poster-skeleton')?.classList.add('hidden');this.classList.add('loaded');"
-                  onerror="this.onerror=null;this.src='${BLANK_IMG}';this.parentElement.querySelector('.poster-skeleton')?.classList.add('hidden');this.classList.add('loaded');"
-                />
-                <div class="poster-overlay">
-                  <div class="play-badge"><i class="fa-solid fa-play"></i></div>
-                </div>
-              </div>
+            <a href="${href}" class="movie-card position-relative">
+              <img
+                src="${thumb || BLANK_IMG}"
+                alt="${safeName}"
+                loading="lazy"
+                onerror="this.onerror=null;this.src='${BLANK_IMG}';"
+              />
               <div class="movie-info">
                 <div class="movie-title">${safeName}</div>
                 ${ep ? `<div class="movie-meta-card">${ep}</div>` : ""}
@@ -1020,21 +634,20 @@ async function fetchCountrySection(countrySlug, sliderId, swiperId) {
       })
       .join("");
 
-    // Khởi tạo swiper (destroy cũ nếu có) — dùng registry chung
-    if (swiperInstances[swiperId]) {
-      swiperInstances[swiperId].destroy(true, true);
+    // Khởi tạo swiper (destroy cũ nếu có)
+    if (COUNTRY_SWIPER_MAP[swiperId]) {
+      COUNTRY_SWIPER_MAP[swiperId].destroy(true, true);
     }
-    swiperInstances[swiperId] = new Swiper(`#${swiperId}`, {
+    COUNTRY_SWIPER_MAP[swiperId] = new Swiper(`#${swiperId}`, {
       slidesPerView: 2,
-      spaceBetween: 12,
+      spaceBetween: 10,
       breakpoints: {
-        576: { slidesPerView: 3, spaceBetween: 16 },
-        768: { slidesPerView: 4, spaceBetween: 16 },
-        992: { slidesPerView: 5, spaceBetween: 20 },
-        1200: { slidesPerView: 6, spaceBetween: 20 },
+        576: { slidesPerView: 3, spaceBetween: 15 },
+        768: { slidesPerView: 4, spaceBetween: 15 },
+        992: { slidesPerView: 5, spaceBetween: 15 },
+        1200: { slidesPerView: 6, spaceBetween: 15 },
       },
       freeMode: true,
-      grabCursor: true,
     });
   } catch (err) {
     console.error(`fetchCountrySection(${countrySlug}) error:`, err);
@@ -1043,8 +656,6 @@ async function fetchCountrySection(countrySlug, sliderId, swiperId) {
       sliderEl2.innerHTML =
         '<div class="swiper-slide"><p class="text-danger small px-2">Lỗi tải dữ liệu.</p></div>';
     }
-  } finally {
-    countryFetchState[countrySlug] = "idle";
   }
 }
 
@@ -1062,11 +673,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ============================================================
-//  SEARCH — tìm kiếm phim theo tên qua NguonC
+//  SEARCH — tìm kiếm phim theo tên qua phimapi
 // ============================================================
 
 (function () {
-  const SEARCH_API = "https://phim.nguonc.com/api/films/search";
+  const SEARCH_API = "https://phimapi.com/v1/api/tim-kiem";
   let searchTimer = null;
   let lastQuery = "";
 
@@ -1100,49 +711,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (el) el.innerHTML = `<div class="search-status">${html}</div>`;
   }
 
-  function buildSearchCardHtml(movie) {
-    // NguonC trả URL ảnh đầy đủ
-    let thumb = movie.poster_url || movie.thumb_url || "";
-    if (thumb === "null" || thumb === "undefined") thumb = "";
-    const fallback =
-      "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 3'><rect width='2' height='3' fill='%23222'/></svg>";
-
-    const key = `${(movie.name || "").trim().toLowerCase()}|${movie.year || ""}`;
-    const href = `detail.html?movieKey=${encodeURIComponent(key)}&slug=${encodeURIComponent(movie.slug || "")}`;
-
-    const safeName = (movie.name || "").replace(/"/g, "&quot;");
-    // NguonC dùng current_episode thay cho episode_current
-    let epCur = "";
-    const cur = movie.current_episode || movie.episode_current || "";
-    const m = cur.match(/(\d+)/);
-    if (m) {
-      const totalEp = parseInt(movie.total_episodes, 10);
-      epCur = totalEp > 0 ? `${m[1]}/${totalEp}` : `Tập ${m[1]}`;
-    } else if (cur) {
-      epCur = cur;
-    }
-    const metaParts = [];
-    if (movie.year) metaParts.push(String(movie.year));
-    if (epCur) metaParts.push(epCur);
-    const meta = metaParts.join(" • ");
-
-    return `
-          <a href="${href}" class="search-result-card" title="${safeName}">
-            <img
-              src="${thumb || fallback}"
-              alt="${safeName}"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-              onerror="this.onerror=null;this.src='${fallback}';"
-            />
-            <div class="search-result-info">
-              <div class="search-result-name">${safeName}</div>
-              ${meta ? `<div class="search-result-meta">${meta}</div>` : ""}
-            </div>
-          </a>`;
-  }
-
-  function renderSearchResults(movies, paginate) {
+  function renderSearchResults(movies) {
     const el = document.getElementById("searchResults");
     if (!el) return;
 
@@ -1151,98 +720,74 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const cards = movies.map(buildSearchCardHtml).join("");
+    const cards = movies
+      .map((movie) => {
+        // Chuẩn hóa ảnh
+        let thumb = movie.thumb_url || movie.poster_url || "";
+        // Bỏ qua giá trị "null" dạng chuỗi từ API
+        if (thumb === "null" || thumb === "undefined") thumb = "";
+        if (thumb && !thumb.startsWith("http")) {
+          thumb = "https://img.ophim.live/uploads/movies/" + thumb;
+        }
+        const fallback =
+          "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 3'><rect width='2' height='3' fill='%23222'/></svg>";
 
-    const totalItems = paginate?.total_items || movies.length;
-    const currentPage = paginate?.current_page || 1;
-    const totalPages  = paginate?.total_page || 1;
-    const shown       = movies.length;
-    const summaryHtml =
-      totalItems > shown
-        ? `<div class="search-summary">Hiển thị ${shown} / <strong>${totalItems}</strong> kết quả · trang ${currentPage}/${totalPages}</div>`
-        : `<div class="search-summary">Tìm thấy <strong>${totalItems}</strong> kết quả</div>`;
+        // Key để sang trang detail
+        const key = `${(movie.name || "").trim().toLowerCase()}|${movie.year || ""}`;
+        const href = `detail.html?movieKey=${encodeURIComponent(key)}&slug=${encodeURIComponent(movie.slug || "")}`;
 
-    const loadMoreHtml =
-      currentPage < totalPages
-        ? `<button type="button" class="btn-search-loadmore" id="searchLoadMoreBtn">
-             <i class="fa-solid fa-rotate me-2"></i>Xem thêm kết quả (còn ${totalPages - currentPage} trang)
-           </button>`
-        : "";
+        const safeName = (movie.name || "").replace(/"/g, "&quot;");
+        const meta = movie.year
+          ? movie.episode_current
+            ? `${movie.year} • ${movie.episode_current}`
+            : String(movie.year)
+          : "";
 
-    el.innerHTML = `
-      ${summaryHtml}
-      <div class="search-grid">${cards}</div>
-      ${loadMoreHtml}
-    `;
+        return `
+          <a href="${href}" class="search-result-card" title="${safeName}">
+            <img
+              src="${thumb || fallback}"
+              alt="${safeName}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='${fallback}';"
+            />
+            <div class="search-result-info">
+              <div class="search-result-name">${safeName}</div>
+              ${meta ? `<div class="search-result-meta">${meta}</div>` : ""}
+            </div>
+          </a>`;
+      })
+      .join("");
 
-    if (currentPage < totalPages) {
-      const btn = document.getElementById("searchLoadMoreBtn");
-      if (btn) {
-        btn.addEventListener("click", () => doSearch(lastQuery, (currentPage + 1), true));
-      }
-    }
+    el.innerHTML = `<div class="search-grid">${cards}</div>`;
   }
 
-  async function doSearch(query, page = 1, append = false) {
+  async function doSearch(query) {
     query = query.trim();
     if (!query) {
       const el = document.getElementById("searchResults");
       if (el) el.innerHTML = "";
       return;
     }
-    if (!append && query === lastQuery) return;
+    if (query === lastQuery) return;
     lastQuery = query;
 
-    if (!append) {
-      showStatus(
-        '<i class="fa-solid fa-spinner fa-spin d-block mx-auto mb-2"></i>Đang tìm kiếm...'
-      );
-    }
+    showStatus(
+      '<i class="fa-solid fa-spinner fa-spin d-block mx-auto mb-2"></i>Đang tìm kiếm...'
+    );
 
     try {
       const res = await axios.get(SEARCH_API, {
-        params: { keyword: query, limit: 24, page },
+        params: { keyword: query, limit: 24 },
       });
 
-      // NguonC trả {status, paginate, items}
-      const items = res.data?.items || [];
-      const paginate = res.data?.paginate || null;
+      // phimapi trả về data.data.items hoặc data.items
+      const items =
+        res.data?.data?.items ||
+        res.data?.items ||
+        [];
 
-      if (append) {
-        // Append kết quả mới vào grid hiện tại
-        const grid = document.querySelector(".search-grid");
-        const existing = document.querySelectorAll(".search-result-card").length;
-        if (grid) {
-          const newCards = items
-            .map((movie) => buildSearchCardHtml(movie))
-            .join("");
-          grid.insertAdjacentHTML("beforeend", newCards);
-        }
-        // Cập nhật tổng kết + nút load more
-        const summary = document.querySelector(".search-summary");
-        const btn = document.getElementById("searchLoadMoreBtn");
-        const totalShown = existing + items.length;
-        const totalItems = paginate?.total_items || totalShown;
-        const currentPage = paginate?.current_page || page;
-        const totalPages = paginate?.total_page || page;
-        if (summary) {
-          summary.innerHTML = `Hiển thị ${totalShown} / <strong>${totalItems}</strong> kết quả · trang ${currentPage}/${totalPages}`;
-        }
-        if (currentPage < totalPages && btn) {
-          btn.outerHTML = `<button type="button" class="btn-search-loadmore" id="searchLoadMoreBtn">
-             <i class="fa-solid fa-rotate me-2"></i>Xem thêm kết quả (còn ${totalPages - currentPage} trang)
-           </button>`;
-          document
-            .getElementById("searchLoadMoreBtn")
-            ?.addEventListener("click", () =>
-              doSearch(lastQuery, currentPage + 1, true)
-            );
-        } else if (btn) {
-          btn.remove();
-        }
-      } else {
-        renderSearchResults(items, paginate);
-      }
+      renderSearchResults(items);
     } catch (err) {
       console.error("Search error:", err);
       showStatus("Không thể tìm kiếm lúc này. Vui lòng thử lại.");
@@ -1261,24 +806,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Mở overlay
     if (btnDesktop) btnDesktop.addEventListener("click", openSearch);
-
-    // Phím tắt: Ctrl+K / Cmd+K / "/" để mở search (giống GitHub, YouTube)
-    document.addEventListener("keydown", (e) => {
-      const isTyping =
-        document.activeElement &&
-        (document.activeElement.tagName === "INPUT" ||
-          document.activeElement.tagName === "TEXTAREA" ||
-          document.activeElement.isContentEditable);
-      if (isTyping) return;
-
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        openSearch();
-      } else if (e.key === "/") {
-        e.preventDefault();
-        openSearch();
-      }
-    });
 
     // Đóng overlay
     if (closeBtn) closeBtn.addEventListener("click", closeSearch);

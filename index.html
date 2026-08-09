@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0b0f" />
+    <meta name="theme-color" content="#0b0b0b" />
     <meta name="description" content="SFLIX - Xem phim bản quyền chất lượng cao, vietsub cập nhật nhanh. Phim bộ, phim lẻ, hoạt hình đầy đủ thể loại." />
     <meta name="keywords" content="xem phim, phim vietsub, phim bản quyền, phim bộ, phim lẻ, hoạt hình, anime, donghua" />
     <meta name="author" content="SFLIX Media" />
@@ -24,20 +24,35 @@
     <meta name="twitter:description" content="Xem phim bản quyền chất lượng cao, vietsub cập nhật nhanh. Phim bộ, phim lẻ, hoạt hình đầy đủ thể loại." />
     <meta name="twitter:image" content="https://sondinhson.cloud/assets/images/og-image.svg" />
     <title>SFLIX | Xem Phim Bản Quyền</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@500;600;700;800;900&display=swap" />
+    <!-- Thư viện ngoài -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Link CSS của bạn -->
     <link rel="stylesheet" href="assets/css/style.css" />
   </head>
   <body>
-    <!-- Navbar -->
+    <!-- Navbar Chuyên Nghiệp -->
     <nav class="navbar navbar-expand-lg navbar-custom fixed-top" id="navbar">
       <div class="container-fluid px-3 px-md-5">
-        <a class="brand-logo me-4" href="index.html"></a>
+        <a class="brand-logo me-4" href="index.html">SFLIX</a>
 
+        <!-- Nav links (collapse trên mobile) -->
         <div class="collapse navbar-collapse" id="navMenu">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
             <li class="nav-item">
               <a class="nav-link active" href="index.html">Trang Chủ</a>
             </li>
@@ -47,16 +62,36 @@
           </ul>
         </div>
 
+        <!-- Các icon bên phải — luôn hiện, không trong collapse -->
         <div class="d-flex align-items-center gap-3 ms-auto">
-          <button class="btn-search-mobile" id="searchBtnDesktop" aria-label="Tìm kiếm" title="Tìm kiếm">
+          <!-- Icon tìm kiếm: hiện trên mọi màn hình -->
+          <button
+            class="btn-search-mobile"
+            id="searchBtnDesktop"
+            aria-label="Tìm kiếm"
+            title="Tìm kiếm"
+          >
             <i class="fa-solid fa-magnifying-glass"></i>
           </button>
-          <i class="fa-regular fa-bell text-white fs-5 cursor-pointer d-none d-lg-block" title="Thông báo"></i>
+          <!-- Bell & Avatar: chỉ desktop -->
+          <i
+            class="fa-regular fa-bell text-white fs-5 cursor-pointer d-none d-lg-block"
+            title="Thông báo"
+          ></i>
           <div class="avatar-box d-none d-lg-block">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="User" />
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
+              alt="User"
+            />
           </div>
-          <button class="navbar-toggler border-0 shadow-none text-white p-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-            <i class="fa-solid fa-bars fs-4"></i>
+          <!-- Hamburger -->
+          <button
+            class="navbar-toggler border-0 shadow-none text-white p-0"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navMenu"
+          >
+            <i class="fa-solid fa-bars fs-3"></i>
           </button>
         </div>
       </div>
@@ -67,7 +102,14 @@
       <div class="search-overlay-inner">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass search-icon-input"></i>
-          <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm phim, diễn viên, thể loại..." autocomplete="off" autofocus />
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Tìm kiếm phim..."
+            autocomplete="off"
+            autofocus
+          />
           <button class="search-close-btn" id="searchCloseBtn" aria-label="Đóng">
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -77,28 +119,36 @@
     </div>
 
     <div id="view-home">
-      <!-- Hero Banner -->
+      <!-- Hero Banner Mới -->
       <div class="hero" id="heroBanner">
-        <div class="hero-content container-fluid px-3 px-md-5">
-          <div class="hero-badge" id="heroBadge" style="display:none">
-            <i class="fa-solid fa-play"></i>
-            <span id="heroBadgeText">Mới cập nhật</span>
+        <div class="hero-vignette"></div>
+        <div class="container-fluid px-3 px-md-5 hero-content">
+          <div class="hero-meta" id="heroMeta">
+            <span
+              class="skeleton d-inline-block"
+              style="width: 120px; height: 20px"
+            ></span>
           </div>
 
           <h1 class="hero-title" id="heroTitle">
-            <span class="skeleton d-block mb-2" style="width: 80%; height: 70px"></span>
+            <span
+              class="skeleton d-block mb-2"
+              style="width: 80%; height: 70px"
+            ></span>
           </h1>
 
-          <div class="hero-meta" id="heroMeta">
-            <span class="skeleton d-inline-block" style="width: 180px; height: 20px"></span>
-          </div>
-
-          <p class="hero-desc" id="heroDesc">
-            <span class="skeleton d-block mb-1" style="width: 100%; height: 18px"></span>
-            <span class="skeleton d-block" style="width: 70%; height: 18px"></span>
+          <p class="hero-desc mb-4" id="heroDesc">
+            <span
+              class="skeleton d-block mb-1"
+              style="width: 100%; height: 20px"
+            ></span
+            ><span
+              class="skeleton d-block"
+              style="width: 70%; height: 20px"
+            ></span>
           </p>
 
-          <div class="hero-actions">
+          <div class="d-flex gap-3">
             <button class="btn-play" id="heroPlayBtn" style="display: none">
               <i class="fa-solid fa-play me-2"></i> Phát
             </button>
@@ -109,28 +159,36 @@
         </div>
       </div>
 
-      <!-- Slider Mới Cập Nhật -->
-      <div class="section-block">
-        <div class="section-title-row">
-          <h4 class="section-title"><span class="accent-bar"></span>⚡ Mới Cập Nhật</h4>
-        </div>
+      <!-- Slider Nổi Bật -->
+      <div
+        class="container-fluid px-3 px-md-5 mt-4"
+        style="position: relative; z-index: 5; margin-top: -80px !important"
+      >
+        <h4 class="section-title">Thịnh Hành Hiện Nay</h4>
         <div class="swiper mySwiper pt-2 pb-4">
+          <div class="swiper-wrapper" id="trendingSlider"></div>
+        </div>
+      </div>
+
+      <!-- Slider Phim Mới Cập Nhật -->
+      <div class="container-fluid px-3 px-md-5 mt-4">
+        <h4 class="section-title">Mới Cập Nhật</h4>
+        <div class="swiper mySwiper2 pt-2 pb-4">
           <div class="swiper-wrapper" id="movieGrid"></div>
         </div>
       </div>
 
-      <!-- Phim Hàn Quốc -->
-      <div class="section-block">
+      <!-- Section: Phim Hàn Quốc -->
+      <div class="container-fluid px-3 px-md-5 mt-5">
         <div class="section-title-row">
-          <h4 class="section-title">
-            <span class="accent-bar"></span><span class="section-flag">🇰🇷</span> Phim Hàn Quốc
+          <h4 class="section-title mb-0">
+            <span class="section-flag">🇰🇷</span> Phim Hàn Quốc
           </h4>
-          <a href="catalog.html?type=series&country=han-quoc" class="section-view-all">
-            Xem tất cả <i class="fa-solid fa-chevron-right ms-1"></i>
-          </a>
+          <a href="catalog.html?type=series&country=han-quoc" class="section-view-all">Xem tất cả <i class="fa-solid fa-chevron-right ms-1"></i></a>
         </div>
         <div class="swiper countrySwiper pt-2 pb-4" id="swiperHanQuoc">
           <div class="swiper-wrapper" id="sliderHanQuoc">
+            <!-- skeleton -->
             <div class="swiper-slide"><div class="skeleton skeleton-card"></div></div>
             <div class="swiper-slide"><div class="skeleton skeleton-card"></div></div>
             <div class="swiper-slide"><div class="skeleton skeleton-card"></div></div>
@@ -140,15 +198,13 @@
         </div>
       </div>
 
-      <!-- Phim Trung Quốc -->
-      <div class="section-block">
+      <!-- Section: Phim Trung Quốc -->
+      <div class="container-fluid px-3 px-md-5 mt-4">
         <div class="section-title-row">
-          <h4 class="section-title">
-            <span class="accent-bar"></span><span class="section-flag">🇨🇳</span> Phim Trung Quốc
+          <h4 class="section-title mb-0">
+            <span class="section-flag">🇨🇳</span> Phim Trung Quốc
           </h4>
-          <a href="catalog.html?type=series&country=trung-quoc" class="section-view-all">
-            Xem tất cả <i class="fa-solid fa-chevron-right ms-1"></i>
-          </a>
+          <a href="catalog.html?type=series&country=trung-quoc" class="section-view-all">Xem tất cả <i class="fa-solid fa-chevron-right ms-1"></i></a>
         </div>
         <div class="swiper countrySwiper pt-2 pb-4" id="swiperTrungQuoc">
           <div class="swiper-wrapper" id="sliderTrungQuoc">
@@ -161,15 +217,13 @@
         </div>
       </div>
 
-      <!-- Phim Âu Mỹ -->
-      <div class="section-block">
+      <!-- Section: Phim Âu Mỹ -->
+      <div class="container-fluid px-3 px-md-5 mt-4 mb-5">
         <div class="section-title-row">
-          <h4 class="section-title">
-            <span class="accent-bar"></span><span class="section-flag">🇺🇸</span> Phim Âu Mỹ
+          <h4 class="section-title mb-0">
+            <span class="section-flag">🇺🇸</span> Phim Âu Mỹ
           </h4>
-          <a href="catalog.html?type=series&country=au-my" class="section-view-all">
-            Xem tất cả <i class="fa-solid fa-chevron-right ms-1"></i>
-          </a>
+          <a href="catalog.html?type=series&country=au-my" class="section-view-all">Xem tất cả <i class="fa-solid fa-chevron-right ms-1"></i></a>
         </div>
         <div class="swiper countrySwiper pt-2 pb-4" id="swiperAuMy">
           <div class="swiper-wrapper" id="sliderAuMy">
@@ -184,9 +238,9 @@
     </div>
 
     <!-- Footer -->
-    <footer>
-      <div class="container-fluid px-3 px-md-5">
-        <p class="mb-2">Hệ thống giải trí nội bộ SFLIX Media Center.</p>
+    <footer class="py-5 mt-5">
+      <div class="container-fluid px-3 px-md-5 text-center">
+        <p class="mb-2">Hệ thống giải trí nội bộ SFlix Media Center.</p>
         <p class="mb-0">Dữ liệu được cung cấp bởi các API miễn phí.</p>
       </div>
     </footer>
