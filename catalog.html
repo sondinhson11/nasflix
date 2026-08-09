@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0b0b" />
+    <meta name="theme-color" content="#0b0b0f" />
     <meta name="description" content="Danh mục phim SFLIX - Lọc theo thể loại, quốc gia, năm. Phim bộ, phim lẻ, hoạt hình cập nhật liên tục." />
     <meta name="robots" content="index, follow" />
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
@@ -22,76 +22,33 @@
     <meta name="twitter:description" content="Khám phá hàng nghìn bộ phim bản quyền với bộ lọc thể loại, quốc gia, năm phát hành." />
     <meta name="twitter:image" content="https://sondinhson.cloud/assets/images/og-image.svg" />
     <title>SFLIX | Danh mục phim</title>
-    <!-- Thư viện ngoài -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Link CSS của bạn -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Inter:wght@500;600;700;800;900&display=swap" />
     <link rel="stylesheet" href="assets/css/style.css" />
   </head>
   <body>
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-custom fixed-top" id="navbar">
       <div class="container-fluid px-3 px-md-5">
-        <a class="brand-logo me-4" href="index.html">SFLIX</a>
-
-        <!-- Nav links (collapse trên mobile) -->
+        <a class="brand-logo me-4" href="index.html"></a>
         <div class="collapse navbar-collapse" id="navMenu">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
-            <li class="nav-item">
-              <a class="nav-link" href="index.html">Trang Chủ</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="catalog.html?type=series" id="seriesLink">Phim Bộ</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="catalog.html?type=movies" id="moviesLink">Phim Lẻ</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="catalog.html?type=hoat-hinh" id="animeLink">Hoạt Hình</a>
-            </li>
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1">
+            <li class="nav-item"><a class="nav-link" href="index.html">Trang Chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="catalog.html?type=series" id="seriesLink">Phim Bộ</a></li>
+            <li class="nav-item"><a class="nav-link" href="catalog.html?type=movies" id="moviesLink">Phim Lẻ</a></li>
+            <li class="nav-item"><a class="nav-link" href="catalog.html?type=hoat-hinh" id="animeLink">Hoạt Hình</a></li>
           </ul>
         </div>
-
-        <!-- Các icon bên phải — luôn hiện, không trong collapse -->
         <div class="d-flex align-items-center gap-3 ms-auto">
-          <!-- Icon tìm kiếm: hiện trên mọi màn hình -->
-          <button
-            class="btn-search-mobile"
-            id="searchBtnDesktop"
-            aria-label="Tìm kiếm"
-            title="Tìm kiếm"
-          >
+          <button class="btn-search-mobile" id="searchBtnDesktop" aria-label="Tìm kiếm" title="Tìm kiếm">
             <i class="fa-solid fa-magnifying-glass"></i>
           </button>
-          <!-- Bell & Avatar: chỉ desktop -->
-          <i
-            class="fa-regular fa-bell text-white fs-5 cursor-pointer d-none d-lg-block"
-            title="Thông báo"
-          ></i>
+          <i class="fa-regular fa-bell text-white fs-5 cursor-pointer d-none d-lg-block" title="Thông báo"></i>
           <div class="avatar-box d-none d-lg-block">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png"
-              alt="User"
-            />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Netflix-avatar.png" alt="User" />
           </div>
-          <!-- Hamburger -->
-          <button
-            class="navbar-toggler border-0 shadow-none text-white p-0"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navMenu"
-          >
-            <i class="fa-solid fa-bars fs-3"></i>
+          <button class="navbar-toggler border-0 shadow-none text-white p-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <i class="fa-solid fa-bars fs-4"></i>
           </button>
         </div>
       </div>
@@ -102,14 +59,7 @@
       <div class="search-overlay-inner">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass search-icon-input"></i>
-          <input
-            type="text"
-            id="searchInput"
-            class="search-input"
-            placeholder="Tìm kiếm phim..."
-            autocomplete="off"
-            autofocus
-          />
+          <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm phim..." autocomplete="off" autofocus />
           <button class="search-close-btn" id="searchCloseBtn" aria-label="Đóng">
             <i class="fa-solid fa-xmark"></i>
           </button>
@@ -118,26 +68,19 @@
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div id="view-catalog" style="padding-top: 80px">
+    <div id="view-catalog" class="catalog-page">
       <div class="container-fluid px-3 px-md-5">
-        <h1 class="section-title my-3 my-md-4" id="catalogTitle">Phim Bộ</h1>
+        <h1 class="section-title" id="catalogTitle" style="font-size:clamp(1.5rem, 1.3rem + 1vw, 2.2rem);margin-bottom:var(--sp-5);">Phim Bộ</h1>
 
-        <!-- Filter Bar: gọn 1 hàng, mobile cuộn ngang, desktop hiển thị đầy đủ -->
-        <div class="filter-bar mb-3 mb-md-4">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
           <!-- Mobile: nút mở popup + chip sắp xếp nhanh -->
           <div class="filter-bar-mobile d-flex d-md-none align-items-center gap-2">
-            <button
-              type="button"
-              class="filter-toggle-btn"
-              id="filterToggleBtn"
-              aria-label="Mở bộ lọc"
-            >
+            <button type="button" class="filter-toggle-btn" id="filterToggleBtn" aria-label="Mở bộ lọc">
               <i class="fa-solid fa-sliders me-2"></i>
               Bộ lọc
               <span class="filter-count" id="filterCount" hidden></span>
             </button>
-
             <div class="filter-quick-scroll flex-grow-1">
               <select id="filterSortMobile" class="chip-select">
                 <option value="updated">Mới cập nhật</option>
@@ -147,7 +90,7 @@
             </div>
           </div>
 
-          <!-- Desktop: 4 dropdown inline trên 1 hàng -->
+          <!-- Desktop: 4 dropdown inline -->
           <div class="filter-bar-desktop d-none d-md-flex">
             <div class="filter-item">
               <select id="filterYear" class="filter-select">
@@ -180,12 +123,7 @@
           <div class="filter-sheet-panel">
             <div class="filter-sheet-header">
               <h5 class="m-0">Bộ lọc</h5>
-              <button
-                type="button"
-                class="filter-sheet-close"
-                id="filterSheetClose"
-                aria-label="Đóng"
-              >
+              <button type="button" class="filter-sheet-close" id="filterSheetClose" aria-label="Đóng">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -210,43 +148,23 @@
               </div>
             </div>
             <div class="filter-sheet-footer">
-              <button
-                type="button"
-                class="filter-sheet-reset"
-                id="filterSheetReset"
-              >
-                Đặt lại
-              </button>
-              <button
-                type="button"
-                class="filter-sheet-apply"
-                id="filterSheetApply"
-              >
-                Áp dụng
-              </button>
+              <button type="button" class="filter-sheet-reset" id="filterSheetReset">Đặt lại</button>
+              <button type="button" class="filter-sheet-apply" id="filterSheetApply">Áp dụng</button>
             </div>
           </div>
         </div>
 
         <!-- Movie Grid -->
-        <div class="row g-2 g-md-3" id="catalogGrid"></div>
+        <div id="catalogGrid" class="catalog-grid"></div>
 
-        <!-- Load More Button -->
-        <div class="text-center mt-5 mb-5">
-          <button
-            class="btn btn-outline-light px-5 py-2 rounded-0 border-secondary"
-            id="loadMoreBtn"
-          >
-            Xem thêm <i class="fa-solid fa-chevron-down ms-2"></i>
-          </button>
-        </div>
+        <!-- Pagination -->
+        <div class="pagination-wrapper" id="paginationWrapper"></div>
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="py-5 mt-5">
-      <div class="container-fluid px-3 px-md-5 text-center">
-        <p class="mb-2">Hệ thống giải trí nội bộ SFlix Media Center.</p>
+    <footer>
+      <div class="container-fluid px-3 px-md-5">
+        <p class="mb-2">Hệ thống giải trí nội bộ SFLIX Media Center.</p>
         <p class="mb-0">Dữ liệu được cung cấp bởi các API miễn phí.</p>
       </div>
     </footer>
