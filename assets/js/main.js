@@ -36,6 +36,7 @@ const MOVIE_MAP_MAX_ENTRIES = 500; // LRU cap — tránh localStorage phình vô
 const SOURCE_LABELS = {
   nguonc: "NguonC",
   phimapi: "PhimAPI",
+  drive: "Drive",
 };
 
 let currentPage = 1;
@@ -521,6 +522,11 @@ async function fetchHomeMovies(page = 1) {
 }
 
 async function fetchSourceDetail(source, slug) {
+  if (source === "drive") {
+    // Nguồn thủ công, dữ liệu khai báo trong assets/js/drive-source.js
+    return await fetchDriveDetail(slug);
+  }
+
   if (source === "nguonc") {
     const cfg = API_CONFIG.nguonc;
     const res = await axios.get(cfg.base + cfg.detail(slug));
@@ -774,6 +780,7 @@ async function loadMovieDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const movieKey = urlParams.get("movieKey");
   const slug = urlParams.get("slug");
+  const source = urlParams.get("source");
   const initialEp = urlParams.get("ep");
   const epListContainer = document.getElementById("episodeList");
 
@@ -792,7 +799,11 @@ async function loadMovieDetail() {
       }
     }
 
-    if (slug) {
+    if (slug && source) {
+      // Nguồn tường minh (vd: drive) — load thẳng, không dò MERGE_SOURCES
+      await loadMovieDetailSource(source, slug);
+      activateEpisodeFromQuery(initialEp);
+    } else if (slug) {
       await loadMovieDetailBySlug(slug);
       activateEpisodeFromQuery(initialEp);
     }
