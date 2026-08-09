@@ -282,7 +282,9 @@ async function renderDriveAdminMovieList() {
     .map((movie, index) => {
       const meta = catalog[index] || {};
       const localPoster = `${LOCAL_POSTER_DIR}${movie.slug}.jpg`;
-      const poster = meta.poster || (movie.useLocalPoster ? localPoster : "assets/images/favicon.svg");
+      const poster =
+        meta.poster ||
+        (movie.useLocalPoster ? localPoster : "assets/images/favicon.svg");
       const safeTitle = movie.tmdbQuery || movie.slug;
       return `
         <div class="drive-admin-movie-item">
