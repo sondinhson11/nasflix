@@ -41,9 +41,7 @@
 
     // Tự động phát tập theo URL
     const targetBtn = epParam
-      ? document.querySelector(
-          `.ep-btn[data-ep-key="${cssEscape(epParam)}"]`,
-        )
+      ? document.querySelector(`.ep-btn[data-ep-key="${cssEscape(epParam)}"]`)
       : document.querySelector(".ep-btn");
     if (targetBtn) {
       targetBtn.classList.add("active");
@@ -105,17 +103,42 @@ function readEpFromButton(btn, episodes) {
   if (!Number.isNaN(idx) && episodes[idx]) return episodes[idx];
   // fallback: khớp theo name
   const txt = btn.innerText.trim();
-  return episodes.find(
-    (ep) => (ep.name || ep.episode || "Tập") === txt,
+  return episodes.find((ep) => (ep.name || ep.episode || "Tập") === txt);
+}
+
+function normalizeVideoUrl(url) {
+  if (!url) return url;
+
+  const trimmed = url.trim();
+  const youTubeShort = trimmed.match(
+    /(?:https?:\/\/)?youtu\.be\/([-_A-Za-z0-9]+)(?:\?.*)?$/i,
   );
+  if (youTubeShort) {
+    return `https://www.youtube.com/embed/${youTubeShort[1]}?autoplay=1&rel=0`;
+  }
+
+  const youTubeWatch = trimmed.match(
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([-_A-Za-z0-9]+)(?:[&?].*)?$/i,
+  );
+  if (youTubeWatch) {
+    return `https://www.youtube.com/embed/${youTubeWatch[1]}?autoplay=1&rel=0`;
+  }
+
+  const youTubeEmbed = trimmed.match(
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([-_A-Za-z0-9]+)(?:\?.*)?$/i,
+  );
+  if (youTubeEmbed) {
+    return `https://www.youtube.com/embed/${youTubeEmbed[1]}?autoplay=1&rel=0`;
+  }
+
+  return trimmed;
 }
 
 function playEpisode(ep, movieName) {
-  const url = ep.embed || ep.link_embed || ep.url || ep.file;
+  const url = normalizeVideoUrl(ep.embed || ep.link_embed || ep.url || ep.file);
   if (!url) return;
   const iframe = document.getElementById("videoPlayer");
   if (iframe) iframe.src = url;
   const nav = document.getElementById("playerTitleNav");
-  if (nav)
-    nav.innerText = `${movieName} - Tập ${ep.name || ep.episode || ""}`;
+  if (nav) nav.innerText = `${movieName} - Tập ${ep.name || ep.episode || ""}`;
 }

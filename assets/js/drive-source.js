@@ -500,8 +500,7 @@ const DRIVE_MOVIES_RAW = [
       {
         name: "HD",
         slug: "spider-man-brand-new-day",
-        embed:
-          "https://drive.google.com/file/d/1ArV2mZ6ccJ7gj7VHK6PTliZUkMGYvRaR/preview",
+        embed: "https://youtu.be/HBnsHLyZ8GA",
       },
     ],
   },
