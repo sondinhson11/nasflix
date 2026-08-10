@@ -99,13 +99,8 @@ async function refreshDriveMoviesRawFromRemote() {
   const remoteMovies = await fetchRemoteDriveMoviesRaw();
   if (!remoteMovies) return;
 
-  const localMovies = getDriveMoviesRaw();
-  const localJson = JSON.stringify(localMovies);
-  const remoteJson = JSON.stringify(remoteMovies);
-  if (localJson !== remoteJson) {
-    saveDriveMoviesRaw(remoteMovies);
-    console.info("Drive movies đã được làm mới từ dữ liệu remote.");
-  }
+  saveDriveMoviesRaw(remoteMovies);
+  console.info("Drive movies đã được làm mới từ dữ liệu remote.");
 }
 
 function invalidateDriveCatalogCache() {
