@@ -1,0 +1,15 @@
+[
+  {
+    "slug": "spider-man-brand-new-day",
+    "tmdbQuery": "Spider-Man: Brand New Day",
+    "year": 2026,
+    "useLocalPoster": false,
+    "episodes": [
+      {
+        "name": "HD",
+        "slug": "spider-man-brand-new-day",
+        "embed": "https://drive.google.com/file/d/1ArV2mZ6ccJ7gj7VHK6PTliZUkMGYvRaR/preview"
+      }
+    ]
+  }
+]

@@ -30,6 +30,7 @@ const DRIVE_ADMIN_USER = "sondinhson11";
 const DRIVE_ADMIN_PASS = "As1029384";
 const DRIVE_ADMIN_STORAGE_KEY = "SFLIX_drive_movies_raw";
 const DRIVE_ADMIN_SESSION_KEY = "SFLIX_drive_admin_logged_in";
+const DRIVE_ADMIN_REMOTE_DATA_URL = "assets/data/drive-movies.json";
 let driveMoviesRawState = null;
 let driveAdminOverlayEl = null;
 let driveAdminActiveEditIndex = -1;
@@ -68,6 +69,42 @@ function saveDriveMoviesRaw(movies) {
       "Không thể lưu DRIVE_MOVIES_RAW vào localStorage:",
       err.message,
     );
+  }
+}
+
+async function fetchRemoteDriveMoviesRaw() {
+  if (!DRIVE_ADMIN_REMOTE_DATA_URL) return null;
+
+  try {
+    const response = await fetch(DRIVE_ADMIN_REMOTE_DATA_URL, {
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const remoteData = await response.json();
+    if (!Array.isArray(remoteData)) {
+      throw new Error("Dữ liệu remote không phải mảng.");
+    }
+
+    return remoteData;
+  } catch (err) {
+    console.warn("Không thể lấy dữ liệu Drive remote:", err.message);
+    return null;
+  }
+}
+
+async function refreshDriveMoviesRawFromRemote() {
+  const remoteMovies = await fetchRemoteDriveMoviesRaw();
+  if (!remoteMovies) return;
+
+  const localMovies = getDriveMoviesRaw();
+  const localJson = JSON.stringify(localMovies);
+  const remoteJson = JSON.stringify(remoteMovies);
+  if (localJson !== remoteJson) {
+    saveDriveMoviesRaw(remoteMovies);
+    console.info("Drive movies đã được làm mới từ dữ liệu remote.");
   }
 }
 
@@ -643,7 +680,8 @@ async function renderDriveHomeSection() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await refreshDriveMoviesRawFromRemote();
   renderDriveHomeSection();
   initDriveAdmin();
 });
