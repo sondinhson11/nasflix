@@ -106,36 +106,8 @@ function readEpFromButton(btn, episodes) {
   return episodes.find((ep) => (ep.name || ep.episode || "Tập") === txt);
 }
 
-function normalizeVideoUrl(url) {
-  if (!url) return url;
-
-  const trimmed = url.trim();
-  const youTubeShort = trimmed.match(
-    /(?:https?:\/\/)?youtu\.be\/([-_A-Za-z0-9]+)(?:\?.*)?$/i,
-  );
-  if (youTubeShort) {
-    return `https://www.youtube.com/embed/${youTubeShort[1]}?autoplay=1&rel=0`;
-  }
-
-  const youTubeWatch = trimmed.match(
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([-_A-Za-z0-9]+)(?:[&?].*)?$/i,
-  );
-  if (youTubeWatch) {
-    return `https://www.youtube.com/embed/${youTubeWatch[1]}?autoplay=1&rel=0`;
-  }
-
-  const youTubeEmbed = trimmed.match(
-    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([-_A-Za-z0-9]+)(?:\?.*)?$/i,
-  );
-  if (youTubeEmbed) {
-    return `https://www.youtube.com/embed/${youTubeEmbed[1]}?autoplay=1&rel=0`;
-  }
-
-  return trimmed;
-}
-
 function playEpisode(ep, movieName) {
-  const url = normalizeVideoUrl(ep.embed || ep.link_embed || ep.url || ep.file);
+  const url = ep.embed || ep.link_embed || ep.url || ep.file;
   if (!url) return;
   const iframe = document.getElementById("videoPlayer");
   if (iframe) iframe.src = url;
