@@ -2214,9 +2214,25 @@ body.player-page {
 }
 
 /* ====== PAGINATION ====== */
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
+/* Pagination đã bỏ — dùng infinite scroll. Class giữ lại để không vỡ code cũ nếu còn sót. */
+.pagination-wrapper { display: none !important; }
+
+/* Infinite scroll: sentinel ẩn, dùng để IntersectionObserver phát hiện cuộn tới đáy */
+.load-more-sentinel {
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Footer trạng thái load-more (loading spinner / "hết phim") */
+.load-more-footer {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 1.5rem 0;
+}
+.load-more-footer i.fa-spinner {
+  color: var(--accent, #e50914);
+}
   align-items: center;
   gap: var(--sp-2);
   margin-top: var(--sp-8);

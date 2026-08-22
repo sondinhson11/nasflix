@@ -1,0 +1,520 @@
+/* ============================================================
+   SFLIX — TV / Leanback Mode
+   Kích hoạt khi ?tv=1 trên URL hoặc UA khớp Android TV / Leanback
+   ============================================================ */
+
+/* === Reset hover-only styles; thay bằng focus rings === */
+body.tv-mode *,
+body.tv-mode *::before,
+body.tv-mode *::after {
+  /* Tắt transition gây giật khi focus di chuyển nhanh qua nhiều thẻ */
+  transition-duration: 0.08s !important;
+}
+
+body.tv-mode .movie-card:hover,
+body.tv-mode .nav-link:hover,
+body.tv-mode .ep-btn:hover,
+body.tv-mode .btn-search-mobile:hover,
+body.tv-mode .navbar-toggler:hover,
+body.tv-mode .page-btn:hover,
+body.tv-mode .filter-toggle-btn:hover,
+body.tv-mode .filter-sheet-apply:hover,
+body.tv-mode .search-close-btn:hover,
+body.tv-mode .server-select-btn:hover {
+  /* Tắt hover effect — TV không có chuột */
+  background: inherit;
+  border-color: inherit;
+  color: inherit;
+  transform: none;
+  box-shadow: none;
+}
+
+/* === Focus rings — cyan glow dành cho D-pad === */
+body.tv-mode a:focus,
+body.tv-mode button:focus,
+body.tv-mode select:focus,
+body.tv-mode input:focus,
+body.tv-mode [tabindex]:focus,
+body.tv-mode .movie-card:focus,
+body.tv-mode .ep-btn:focus,
+body.tv-mode .nav-link:focus,
+body.tv-mode .page-btn:focus,
+body.tv-mode .filter-toggle-btn:focus,
+body.tv-mode .filter-sheet-apply:focus,
+body.tv-mode .filter-sheet-reset:focus,
+body.tv-mode .server-select-btn:focus,
+body.tv-mode .search-result-card:focus,
+body.tv-mode #searchBtnDesktop:focus,
+body.tv-mode #searchCloseBtn:focus,
+body.tv-mode #backToDetailBtn:focus,
+body.tv-mode #heroPlayBtn:focus,
+body.tv-mode #heroDetailBtn:focus,
+body.tv-mode #watchNowBtn:focus,
+body.tv-mode .btn-search-mobile:focus,
+body.tv-mode .navbar-toggler:focus,
+body.tv-mode #filterYear:focus,
+body.tv-mode #filterCountry:focus,
+body.tv-mode #filterGenre:focus,
+body.tv-mode #filterSort:focus,
+body.tv-mode #filterSortMobile:focus,
+body.tv-mode #filterYearSheet:focus,
+body.tv-mode #filterCountrySheet:focus,
+body.tv-mode #filterGenreSheet:focus,
+body.tv-mode .brand-logo:focus {
+  outline: none !important;
+}
+
+body.tv-mode .movie-card:focus-visible,
+body.tv-mode .movie-card.is-focused {
+  outline: 4px solid var(--accent) !important;
+  outline-offset: 4px !important;
+  box-shadow:
+    0 0 0 4px var(--bg-base),
+    0 0 0 8px var(--accent),
+    0 0 40px var(--accent-glow) !important;
+  transform: scale(1.06);
+  z-index: 5;
+  border-radius: var(--r-md);
+}
+
+body.tv-mode .ep-btn:focus-visible,
+body.tv-mode .ep-btn.is-focused {
+  background: var(--grad-primary) !important;
+  border-color: transparent !important;
+  color: white !important;
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 30px var(--accent-glow) !important;
+  transform: scale(1.08);
+  z-index: 5;
+}
+
+body.tv-mode .nav-link:focus-visible,
+body.tv-mode .nav-link.is-focused {
+  background: var(--accent-soft) !important;
+  color: var(--accent) !important;
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+body.tv-mode .btn:focus-visible,
+body.tv-mode #heroPlayBtn:focus-visible,
+body.tv-mode #heroDetailBtn:focus-visible,
+body.tv-mode #watchNowBtn:focus-visible,
+body.tv-mode #searchBtnDesktop:focus-visible,
+body.tv-mode #backToDetailBtn:focus-visible {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 30px var(--accent-glow) !important;
+  filter: brightness(1.15);
+  transform: scale(1.04);
+}
+
+body.tv-mode .page-btn:focus-visible,
+body.tv-mode .page-btn.is-focused {
+  background: var(--accent-soft) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+body.tv-mode select:focus,
+body.tv-mode .filter-toggle-btn:focus-visible,
+body.tv-mode .filter-toggle-btn.is-focused,
+body.tv-mode .filter-sheet-apply:focus-visible,
+body.tv-mode .filter-sheet-reset:focus-visible,
+body.tv-mode .search-close-btn:focus-visible,
+body.tv-mode .server-select-btn:focus-visible {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 2px !important;
+}
+
+body.tv-mode .search-result-card:focus-visible,
+body.tv-mode .search-result-card.is-focused {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 4px !important;
+  transform: scale(1.04);
+  box-shadow: 0 0 30px var(--accent-glow) !important;
+}
+
+body.tv-mode input#searchInput:focus-visible {
+  outline: none !important;
+}
+
+body.tv-mode .brand-logo:focus-visible {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 4px !important;
+  border-radius: var(--r-sm);
+}
+
+/* === 10-foot UI: phóng to card, font, spacing === */
+body.tv-mode {
+  font-size: 18px;
+}
+
+body.tv-mode .hero {
+  height: clamp(560px, 70vh, 760px);
+}
+body.tv-mode .hero-title {
+  font-size: clamp(2.2rem, 1.8rem + 1.6vw, 3.6rem) !important;
+  -webkit-line-clamp: 3;
+}
+body.tv-mode .hero-desc {
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.3rem) !important;
+  -webkit-line-clamp: 4;
+}
+body.tv-mode .hero-meta .meta-pill,
+body.tv-mode .hero-meta .match {
+  font-size: 1rem !important;
+  padding: 8px 14px !important;
+}
+body.tv-mode .hero-actions button {
+  font-size: 1.2rem !important;
+  padding: 16px 32px !important;
+  border-radius: var(--r-md);
+}
+body.tv-mode .section-title {
+  font-size: clamp(1.4rem, 1.2rem + 0.6vw, 2rem) !important;
+}
+body.tv-mode .section-title-row {
+  margin-bottom: var(--sp-5);
+}
+body.tv-mode .section-block {
+  margin-top: var(--sp-12);
+}
+
+/* Cards to hơn cho 10-foot UI */
+body.tv-mode .swiper {
+  overflow: visible !important;
+}
+body.tv-mode .swiper-slide {
+  width: 240px !important;
+}
+body.tv-mode .movie-card {
+  border-radius: var(--r-md);
+  border: 2px solid transparent;
+}
+body.tv-mode .movie-card .play-badge {
+  width: 76px;
+  height: 76px;
+}
+body.tv-mode .movie-card .movie-title {
+  font-size: 1.05rem !important;
+  font-weight: 700;
+}
+body.tv-mode .movie-card .movie-meta-card {
+  font-size: 0.9rem;
+}
+
+/* Swiper navigation rõ hơn */
+body.tv-mode .swiper-button-prev,
+body.tv-mode .swiper-button-next {
+  width: 56px !important;
+  height: 56px !important;
+  background: rgba(0, 212, 255, 0.25);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-full);
+  color: var(--accent);
+}
+body.tv-mode .swiper-button-prev::after,
+body.tv-mode .swiper-button-next::after {
+  font-size: 22px !important;
+  font-weight: 900;
+}
+
+/* Catalog grid: 5 cột full-width, gap rộng */
+body.tv-mode .catalog-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: var(--sp-6) !important;
+}
+body.tv-mode .catalog-page .container-fluid {
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* Filter bar to hơn, dễ bấm */
+body.tv-mode .filter-bar-desktop {
+  gap: var(--sp-3);
+}
+body.tv-mode .filter-select {
+  font-size: 1.05rem !important;
+  padding: 14px 36px 14px 16px !important;
+  border-radius: var(--r-md) !important;
+  border-width: 2px !important;
+}
+body.tv-mode .filter-toggle-btn {
+  font-size: 1.05rem;
+  padding: 12px 18px;
+}
+body.tv-mode .filter-sheet-apply,
+body.tv-mode .filter-sheet-reset {
+  font-size: 1.1rem;
+  padding: 14px 22px;
+}
+
+/* Episode buttons: to, rõ */
+body.tv-mode .ep-btn {
+  font-size: 1.05rem;
+  padding: 14px 10px;
+  border-width: 2px;
+}
+body.tv-mode .episodes-grid {
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+  gap: var(--sp-3) !important;
+}
+
+/* Player page */
+body.tv-mode .player-episodes-sidebar {
+  width: 380px !important;
+  padding: var(--sp-6);
+}
+body.tv-mode .player-episodes-sidebar h5 {
+  font-size: 1.05rem;
+}
+body.tv-mode .episode-list-scroll .ep-btn {
+  font-size: 1rem;
+  padding: 14px 18px;
+}
+
+/* Search overlay trên TV — không autofocus input (vì TV không có soft-keyboard),
+   dùng D-pad để gõ từng ký tự hoặc quick-phrases */
+body.tv-mode .search-input {
+  font-size: 1.4rem;
+  padding: 18px 0;
+}
+body.tv-mode .search-close-btn {
+  font-size: 1.4rem;
+  padding: 12px 16px;
+}
+body.tv-mode .search-result-card .search-result-name {
+  font-size: 1.1rem !important;
+}
+body.tv-mode .search-result-card .search-result-meta {
+  font-size: 0.95rem !important;
+}
+
+/* Navbar trên TV */
+body.tv-mode .navbar-custom {
+  padding: var(--sp-4) 0;
+}
+body.tv-mode .brand-logo {
+  font-size: 2rem !important;
+}
+body.tv-mode .nav-link {
+  font-size: 1.1rem !important;
+  padding: 10px 16px !important;
+}
+body.tv-mode #searchBtnDesktop {
+  font-size: 1.3rem !important;
+  padding: 10px 14px;
+}
+body.tv-mode .avatar-box {
+  width: 44px;
+  height: 44px;
+}
+
+/* Detail page */
+body.tv-mode .detail-title {
+  font-size: clamp(2rem, 1.6rem + 1vw, 2.8rem) !important;
+}
+body.tv-mode .detail-actions button {
+  font-size: 1.1rem;
+  padding: 14px 22px;
+}
+
+/* Pagination to hơn */
+body.tv-mode .page-btn {
+  min-width: 52px !important;
+  height: 52px !important;
+  font-size: 1.1rem;
+}
+
+/* Skeleton to hơn chút */
+body.tv-mode .skeleton.skeleton-card {
+  border-radius: var(--r-md);
+}
+
+/* === Scrollbar dày hơn trên TV === */
+body.tv-mode ::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+body.tv-mode ::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border: 3px solid var(--bg-base);
+}
+
+/* === TV hint overlay — gợi ý phím điều khiển === */
+.tv-hint-bar {
+  position: fixed;
+  bottom: 16px;
+  right: 24px;
+  background: rgba(5, 8, 16, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 16px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  z-index: 5000;
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+body.tv-mode.tv-hint-hidden .tv-hint-bar {
+  opacity: 0;
+}
+.tv-hint-bar .hint-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tv-hint-bar .hint-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-display);
+}
+
+/* === Loading cursor ẩn trên TV (không có chuột) === */
+body.tv-mode,
+body.tv-mode * {
+  cursor: default !important;
+}
+
+/* === Ẩn touch ripple / focus-visible outline mặc định đã có của trình duyệt === */
+body.tv-mode *:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
+/* === TV <select> popup — Netflix-style option list === */
+.tv-select-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 6000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tvPopupFadeIn 0.18s ease-out;
+}
+@keyframes tvPopupFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.tv-select-popup-panel {
+  position: relative;
+  width: min(90vw, 640px);
+  max-height: 80vh;
+  background: linear-gradient(180deg, #0e1622 0%, #070b12 100%);
+  border: 2px solid var(--accent);
+  border-radius: var(--r-lg);
+  padding: var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.7),
+    0 0 60px var(--accent-glow);
+  animation: tvPopupSlideIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes tvPopupSlideIn {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+.tv-select-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border);
+}
+.tv-select-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  max-height: 56vh;
+  padding-right: var(--sp-2);
+}
+.tv-select-option {
+  text-align: left;
+  background: var(--bg-glass);
+  border: 2px solid transparent;
+  color: var(--text-primary);
+  padding: 14px 20px;
+  border-radius: var(--r-md);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
+  font-family: var(--font-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tv-select-option.is-current {
+  background: rgba(0, 212, 255, 0.08);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.tv-select-option.is-current::after {
+  content: " ✓";
+  color: var(--accent);
+  font-weight: 900;
+}
+.tv-select-option.is-highlighted {
+  background: var(--grad-primary) !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow:
+    0 0 0 2px var(--bg-base),
+    0 0 0 4px var(--accent),
+    0 0 30px var(--accent-glow);
+  transform: scale(1.03);
+}
+.tv-select-hint {
+  display: flex;
+  gap: var(--sp-5);
+  justify-content: center;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  flex-wrap: wrap;
+}
+.tv-select-hint span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tv-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+}
