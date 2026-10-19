@@ -133,20 +133,30 @@
             });
         }
 
-        function selectEmail(index) {
+       function selectEmail(index) {
             // Xóa viền đỏ ở thư cũ
             document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
             // Thêm viền đỏ vào thư vừa bấm
             document.getElementById('email-item-' + index).classList.add('active');
             
-            // Ẩn chữ "Vui lòng chọn..." và hiện khung Iframe
             const frameEl = document.getElementById('email-frame');
             const emptyState = document.getElementById('empty-state');
             
             emptyState.style.display = 'none';
             frameEl.style.display = 'block';
-            // Bơm HTML gốc của email vào khung bên phải
-            frameEl.srcdoc = emailsData[index].html;
+            
+            // ÉP CÁC NÚT BẤM MỞ SANG TAB MỚI
+            let rawHtml = emailsData[index].html;
+            
+            // Chèn thẻ <base target="_blank"> vào đầu email để trình duyệt biết phải mở link ở tab mới
+            if (rawHtml.includes('<head>')) {
+                rawHtml = rawHtml.replace('<head>', '<head><base target="_blank">');
+            } else {
+                rawHtml = '<base target="_blank">' + rawHtml;
+            }
+            
+            // Bơm HTML đã chỉnh sửa vào khung bên phải
+            frameEl.srcdoc = rawHtml;
         }
 
         // Tự động chạy khi vừa mở web
